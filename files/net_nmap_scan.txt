@@ -1,0 +1,18 @@
+Starting Nmap 7.94 ( https://nmap.org )
+Nmap scan report for web01.lab.local (10.0.0.5)
+Host is up (0.0021s latency).
+Not shown: 977 closed tcp ports
+PORT     STATE SERVICE     VERSION
+21/tcp  open  ftp          vsftpd 3.0.3
+22/tcp  open  ssh          OpenSSH 8.9p1 Ubuntu 3ubuntu0.4 (protocol 2.0)
+25/tcp  open  smtp         Postfix smtpd 3.6.4
+53/tcp  open  domain       ISC BIND 9.18.6
+80/tcp  open  http         nginx 1.18.0 (Ubuntu)
+110/tcp open  pop3         Dovecot pop3 2.3.16
+143/tcp open  imap         Dovecot imap 2.3.16
+443/tcp open  ssl/http     nginx 1.18.0 (Ubuntu)
+993/tcp open  ssl/imap     Dovecot imap 2.3.16
+995/tcp open  pop3s        Dovecot pop3 2.3.16
+3389/tcp open  ms-wbt-server Microsoft Terminal Server
+
+Nmap done: 1 IP address (1 host up) scanned in 3.41 seconds

@@ -1,0 +1,4 @@
+# Intercepted "encrypted" configuration blob (hex encoded).
+# Encryption key: olympics   (repeating key XOR)
+
+2c383f160806112c061f26031f1d3c16010f0b14001d0a1c0111

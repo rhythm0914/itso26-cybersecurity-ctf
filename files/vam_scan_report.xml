@@ -1,0 +1,23 @@
+<?xml version="1.0" ?>
+<NessusClientData_v2>
+  <Report name="IT Skills Olympics Lab - Quarterly Scan">
+    <ReportItem port="443" svc_name="general" severity="2" pluginID="19506" pluginName="Apache HTTP Server libwebp heap overflow" pluginFamily="General" cvss_base_score="9.8" cve="CVE-2023-4863">
+      <plugin_output>The remote host is affected by CVE-2023-4863. CVSS v3.1 base score: 9.8 (Critical).</plugin_output>
+    </ReportItem>
+    <ReportItem port="443" svc_name="general" severity="2" pluginID="19506" pluginName="Apache HTTP Server path traversal" pluginFamily="General" cvss_base_score="7.5" cve="CVE-2021-41773">
+      <plugin_output>The remote host is affected by CVE-2021-41773. CVSS v3.1 base score: 7.5 (High).</plugin_output>
+    </ReportItem>
+    <ReportItem port="8080" svc_name="general" severity="2" pluginID="19506" pluginName="Apache Log4j2 JNDI remote code execution" pluginFamily="General" cvss_base_score="8.1" cve="CVE-2021-44228">
+      <plugin_output>The remote host is affected by CVE-2021-44228. CVSS v3.1 base score: 8.1 (High).</plugin_output>
+    </ReportItem>
+    <ReportItem port="25" svc_name="general" severity="2" pluginID="19506" pluginName="Exim SMTP remote code execution" pluginFamily="General" cvss_base_score="9.3" cve="CVE-2020-28017">
+      <plugin_output>The remote host is affected by CVE-2020-28017. CVSS v3.1 base score: 9.3 (Critical).</plugin_output>
+    </ReportItem>
+    <ReportItem port="445" svc_name="general" severity="2" pluginID="19506" pluginName="Citrix ADC directory traversal" pluginFamily="General" cvss_base_score="8.8" cve="CVE-2019-19781">
+      <plugin_output>The remote host is affected by CVE-2019-19781. CVSS v3.1 base score: 8.8 (High).</plugin_output>
+    </ReportItem>
+    <ReportItem port="3389" svc_name="general" severity="2" pluginID="19506" pluginName="SMBv1 remote code execution (BlueKeep)" pluginFamily="General" cvss_base_score="6.8" cve="CVE-2017-0144">
+      <plugin_output>The remote host is affected by CVE-2017-0144. CVSS v3.1 base score: 6.8 (Medium).</plugin_output>
+    </ReportItem>
+  </Report>
+</NessusClientData_v2>

@@ -1,0 +1,17 @@
+Oct 14 08:00:01 srv01 sshd[1201]: Server listening on 0.0.0.0 port 22.
+Oct 14 08:00:01 srv01 sshd[1201]: Received signal 15; terminating.
+Oct 14 08:04:12 srv01 sshd[2011]: Accepted publickey for deploy from 10.0.0.20 port 40022 ssh2
+Oct 14 08:11:04 srv01 sshd[2140]: Failed password for invalid user admin from 192.168.56.77 port 51422 ssh2
+Oct 14 08:11:06 srv01 sshd[2141]: Failed password for invalid user admin from 192.168.56.77 port 51430 ssh2
+Oct 14 08:11:31 srv01 sshd[2142]: Failed password for invalid user admin from 192.168.56.77 port 51466 ssh2
+Oct 14 08:12:02 srv01 sshd[2143]: Failed password for invalid user root from 192.168.56.77 port 51488 ssh2
+Oct 14 08:12:40 srv01 sshd[2144]: Failed password for invalid user jenkins from 192.168.56.42 port 51770 ssh2
+Oct 14 08:13:15 srv01 sshd[2145]: Failed password for invalid user jenkins from 192.168.56.77 port 51512 ssh2
+Oct 14 08:13:58 srv01 sshd[2146]: Failed password for invalid user oracle from 10.10.10.5 port 49912 ssh2
+Oct 14 08:14:22 srv01 sshd[2147]: Failed password for invalid user oracle from 192.168.56.77 port 51580 ssh2
+Oct 14 08:15:01 srv01 sshd[2148]: Failed password for invalid user postgres from 192.168.56.77 port 51602 ssh2
+Oct 14 08:15:44 srv01 sshd[2149]: Failed password for invalid user test from 192.168.56.77 port 51644 ssh2
+Oct 14 08:16:40 srv01 sshd[2162]: Accepted password for svc_backup from 192.168.56.42 port 51890 ssh2
+Oct 14 08:16:41 srv01 sshd[2162]: pam_unix(sshd:session): session opened for user svc_backup by (uid=0)
+Oct 14 08:16:41 srv01 sudo:  svc_backup : TTY=pts/0 ; PWD=/home/svc_backup ; USER=root ; COMMAND=/bin/bash
+Oct 14 08:17:03 srv01 sshd[2162]: pam_unix(sshd:session): session closed for user svc_backup

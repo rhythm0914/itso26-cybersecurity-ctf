@@ -1,0 +1,9 @@
+# Recovered copy of /etc/shadow from the lab web server (10.0.0.5).
+# Cracked with:  john --wordlist=files/esp_passwords.txt files/esp_shadow.txt
+# The deploy account password is the flag.
+
+root:$1$lab1$Z1fjFQOcXJNa2BCVWvpZQ/:19812:0:99999:7:::
+admin:$1$lab2$pNqRW7TXZ..zElDXi3esq.:19812:0:99999:7:::
+deploy:$1$olymp1c$SLJRoqiX0ebqZrWcTLs52/:19812:0:99999:7:::
+www-data:*:19812:0:99999:7:::`
+backup:!*:19812:0:99999:7:::

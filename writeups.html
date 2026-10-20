@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Solutions and Kali Linux tool guide for the IT Skills Olympics 2026 Cybersecurity Category practice CTF.">
+<meta name="color-scheme" content="dark">
+<title>Writeups &amp; Kali tool guide &middot; IT Skills Olympics 2026</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="writeups">
+
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<header class="topbar">
+  <div class="wrap topbar__inner">
+    <a class="brand" href="index.html">
+      <span class="brand__mark" aria-hidden="true">&gt;_</span>
+      <span class="brand__text">
+        <strong>IT Skills Olympics 2026</strong>
+        <span>Cybersecurity Category</span>
+      </span>
+    </a>
+    <nav class="topbar__nav" aria-label="Main navigation">
+      <a href="index.html">Home</a>
+      <a href="challenges.html">Challenges</a>
+      <a href="scoreboard.html">Scoreboard</a>
+      <a href="writeups.html" aria-current="page">Writeups</a>
+    </nav>
+    <div class="topbar__status">
+      <span class="pill">Team <b id="hdr-team">not registered</b></span>
+      <span class="pill">Score <b id="hdr-score">0</b></span>
+      <span class="pill pill--timer" data-timer>--:--</span>
+    </div>
+  </div>
+</header>
+
+<main id="main" class="wrap page">
+
+  <section class="section" aria-labelledby="writeups-title">
+    <div class="section__head">
+      <h2 id="writeups-title">Solutions</h2>
+      <span class="muted small">Unlocked once the competition ends (or in practice mode)</span>
+    </div>
+
+    <div class="lock-panel" id="writeups-lock">
+      <p class="lock-panel__icon" aria-hidden="true">&#128274;</p>
+      <h3>Writeups are locked</h3>
+      <p class="muted">
+        In exam simulation mode the solutions open when the countdown reaches zero.
+        In practice mode (config.js: <code>practiceMode: true</code>) they are always
+        available, and solving a single challenge also unlocks them.
+      </p>
+      <a class="btn btn--primary" href="challenges.html">Go to the challenge board</a>
+    </div>
+
+    <div id="writeup-list" hidden></div>
+  </section>
+
+  <section class="section" aria-labelledby="kali-title">
+    <div class="section__head">
+      <h2 id="kali-title">Kali Linux tool guide</h2>
+      <span class="muted small">Everything below works offline</span>
+    </div>
+
+    <div class="note note--warn">
+      <strong>Install everything before the competition.</strong> In the real contest there is
+      no internet access. Prepare the tools and wordlists on a networked machine, then
+      verify them offline.
+    </div>
+
+    <h3>1. Install the tool chain</h3>
+    <pre>sudo apt update
+sudo apt install -y nmap wireshark tshark john hashcat hashid \
+    binwalk exiftool steghide strings file imagemagick \
+    python3 python3-pip sqlmap net-tools openssl gawk
+
+# wordlists (rockyou ships with Kali, move it into a readable place)
+sudo apt install -y wordlists
+sudo locate rockyou.txt.gz
+sudo gunzip /usr/share/wordlists/rockyou.txt.gz
+
+# optional: offline GUI helpers
+sudo apt install -y golang-github-gburca-go-dice
+# CyberChef: download the offline release once, then serve it from /opt
+#   https://gchq.github.io/CyberChef/  ->  cyberchef.html</pre>
+
+    <h3>2. The everyday commands</h3>
+    <div class="table-wrap">
+      <table class="data tool-table">
+        <thead>
+          <tr><th scope="col">Task</th><th scope="col">Command</th><th scope="col">Notes</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Hash type</td><td><code>hashid &lt;hash&gt;</code></td><td>Recognises MD5, SHA-1, SHA-256, NTLM, bcrypt ...</td></tr>
+          <tr><td>Crack MD5</td><td><code>john --format=raw-md5 --wordlist=rockyou.txt hashes.txt</code></td><td><code>john --show</code> prints the result</td></tr>
+          <tr><td>Crack crypt(3)</td><td><code>john --wordlist=rockyou.txt shadow.txt</code></td><td>hashcat: <code>-m 500</code></td></tr>
+          <tr><td>Port scan</td><td><code>nmap -sV -O -oX scan.xml 10.0.0.5</code></td><td>Read the XML or the plain text output</td></tr>
+          <tr><td>Packet capture</td><td><code>tshark -r capture.pcap -Y ftp</code></td><td><code>-z follow,tcp,ascii,0</code> follows the stream</td></tr>
+          <tr><td>DNS records</td><td><code>tshark -r cap.pcap -Y 'dns.qry.type==16' -T fields -e dns.txt</code></td><td>TXT records = type 16</td></tr>
+          <tr><td>Image metadata</td><td><code>exiftool file.png</code></td><td>Shows tEXt / Comment chunks</td></tr>
+          <tr><td>Appended data</td><td><code>binwalk file.png</code> / <code>strings file.png</code></td><td>Look past the IEND chunk</td></tr>
+          <tr><td>Base64 / ROT13</td><td><code>base64 -d</code>, <code>tr 'A-Za-z' 'N-ZA-Mn-za-m'</code></td><td>CyberChef does both in the browser</td></tr>
+          <tr><td>Subnetting</td><td><code>ipcalc 192.168.10.77/26</code></td><td>Or do the arithmetic by hand</td></tr>
+          <tr><td>Firewall review</td><td><code>grep '^-A INPUT' rules.sh</code></td><td>Look for ACCEPT rules in a DROP policy</td></tr>
+          <tr><td>Logs</td><td><code>grep 'Accepted password' auth.log</code></td><td>Failed vs accepted logins</td></tr>
+          <tr><td>Persistence</td><td><code>crontab -l</code>, <code>systemctl list-unit-files</code></td><td>Also check /etc/cron.* and ~/.bashrc</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>3. Tools per official area</h3>
+    <p class="muted">
+      Every challenge card links back to the section of this guide that matches its
+      official area.
+    </p>
+
+    <h4 id="area-essential">Essential Security Principles</h4>
+    <pre># encoding / decoding
+base64 -d file.txt                 tr 'A-Za-z' 'N-ZA-Mn-za-m'   # ROT13
+xxd -r -p blob.hex > blob.bin     openssl enc -d -aes-256-cbc -in f -k KEY
+
+# hashing and password cracking
+md5sum file                        sha256sum file
+hashid &lt;hash&gt;                         john --format=raw-md5 --wordlist=rockyou.txt hashes.txt
+john --wordlist=rockyou.txt shadow.txt   hashcat -m 500 -a 0 shadow.txt rockyou.txt
+
+# XOR and other symmetric tricks
+python3 -c "d=open('blob','rb').read();k=b'key';print(bytes(b^k[i%len(k)] for i,b in enumerate(d)).decode())"</pre>
+
+    <h4 id="area-network">Basic Network Setup and Security</h4>
+    <pre># addressing
+ip -br addr                        ip route                ipcalc 192.168.10.77/26
+
+# service discovery
+nmap -sV -O -oX scan.xml 10.0.0.5  nmap -p- --open 10.0.0.5
+
+# packet analysis
+tshark -r capture.pcap -Y ftp      tshark -r capture.pcap -z follow,tcp,ascii,0
+tshark -r capture.pcap -Y 'dns.qry.type==16' -T fields -e dns.txt
+
+# firewall review
+iptables -L -n -v                   iptables-save &gt; rules.sh
+grep '^-A INPUT' rules.sh</pre>
+
+    <h4 id="area-endpoint">Endpoint Security Concepts</h4>
+    <pre># logs and indicators of compromise
+grep -i 'Accepted password' auth.log
+grep -iE 'failed password|error|denied' auth.log | wc -l
+
+# persistence
+crontab -l                          ls -la /etc/cron.*        systemctl list-timers
+grep -R 'base64 -d' /etc/systemd /etc/cron* 2&gt;/dev/null
+
+# file forensics
+file mystery.bin                    strings -a mystery.bin | grep -i flag
+exiftool photo.png                  binwalk photo.png        steghide extract -sf secret.txt -p pass photo.jpg</pre>
+
+    <h4 id="area-risk">Vulnerability Assessment and Risk Management</h4>
+    <pre># scan reports
+grep -i 'severity' report.csv | sort -t, -k7 -nr | head
+xmllint --xpath '//ReportItem[@cvss_base_score&gt;9]' report.xml
+
+# risk = likelihood x impact
+awk -F, 'NR&gt;1 &amp;&amp; $6=="Critical" {print $1, $4, $7}' report.csv
+# Critical = 4, High = 3, Medium = 2, Low = 1
+
+# verification
+nmap -sV -p 443 --script ssl-cert 10.10.5.12</pre>
+
+    <h4 id="area-trivia">Trivia round</h4>
+    <pre># the numbers you need at your fingertips
+grep -E '^(ssh|https|http)\b' /etc/services
+cat /etc/services | grep -w 22
+nmap --help | grep -A2 '\-sV'
+# CVSS = Common Vulnerability Scoring System</pre>
+
+    <h3>4. Packets, quick recipes</h3>
+    <pre># list every service nmap found, sorted
+cat net_nmap_scan.txt | grep -E '^[0-9]+/tcp'
+
+# extract the FTP credentials of a capture
+tshark -r net_capture_login.pcap -Y ftp \
+       -T fields -e ftp.request.command -e ftp.request.arg
+
+# pull all DNS TXT payloads and rebuild the exfiltrated blob
+tshark -r net_dns_exfil.pcap -Y 'dns.qry.type==16' \
+       -T fields -e dns.txt | tr -d '\n' | base64 -d; echo
+
+# carve every file out of a capture
+tshark -r net_capture_login.pcap --export-objects http,/tmp/carved</pre>
+
+    <h3>5. Files, quick recipes</h3>
+    <pre># decode an obfuscated payload and reverse it
+echo &lt;base64&gt; | base64 -d | rev
+
+# XOR a blob with a repeating key
+python3 - &lt;&lt;'PY'
+data = open('blob.bin','rb').read()
+key  = b'olympics'
+print(bytes(b ^ key[i % len(key)] for i, b in enumerate(data)).decode())
+PY
+
+# look at what is really inside an image
+exiftool end_secret.png
+binwalk end_secret.png
+strings end_secret.png | grep CTF</pre>
+
+    <h3>6. Report and risk recipes</h3>
+    <pre># the highest CVSS finding of a scan report
+sort -t, -k7 -nr vam_scan_report.csv | head -3
+
+# risk = likelihood x impact  (Critical 4, High 3, Medium 2, Low 1)
+awk -F, 'NR&gt;1 {print $1, $4, $6, $7}' vam_scan_report.csv
+
+# the XML variant of the same report
+xmllint --xpath '//ReportItem[@cvss_base_score&gt;9]' vam_scan_report.xml</pre>
+
+    <h3>7. Static IP and LAN practice</h3>
+    <p class="muted">
+      The real competition expects the teams to build their own network. Practise the
+      same steps on Kali before the event:
+    </p>
+    <pre># show the current addressing
+ip -br addr
+ip route
+
+# set a static address with NetworkManager
+nmcli con show
+nmcli con mod "Wired connection 1" ipv4.method manual \
+       ipv4.addresses 192.168.10.50/24 ipv4.gateway 192.168.10.1 \
+       ipv4.dns "8.8.8.8 1.1.1.1"
+nmcli con up "Wired connection 1"
+
+# or without NetworkManager
+sudo ip addr add 192.168.10.50/24 dev eth0
+sudo ip route add default via 192.168.10.1
+
+# verify
+ping -c 4 192.168.10.1
+ping -c 4 8.8.8.8
+nmcli device status</pre>
+    <p class="muted">
+      Connect two laptops with a UTP (cat5e/cat6) cable - a modern switch auto-MDI-X
+      handles the crossover for you - give both machines an address in the same subnet
+      and verify with <code>ping</code> and <code>arp -n</code>. Keep a screenshot of
+      the working configuration, it is often worth marks.
+    </p>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap footer__inner">
+    <span>IT Skills Olympics 2026 &middot; Cybersecurity Category &middot; practice simulator</span>
+    <span>Scores are stored in your browser only.</span>
+  </div>
+</footer>
+
+<div class="page-status" id="page-status" role="status" aria-live="polite" data-visible="false"></div>
+
+<script src="js/sha256.js"></script>
+<script src="js/config.js"></script>
+<script src="js/challenges.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

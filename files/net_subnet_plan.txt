@@ -1,0 +1,9 @@
+# IT Skills Olympics - lab IP plan (extract of the router configuration)
+
+Site ............: IT Skills Olympics Lab, Building B
+Router LAN port .: eth0
+Router IP .......: 192.168.10.77/26
+DHCP range ......: 192.168.10.65 - 192.168.10.126
+
+Task: work out the subnet of 192.168.10.77/26.
+Flag format: CTF{<network address>-<broadcast address>}
