@@ -1,0 +1,8 @@
+# Files in the repository root that must not be uploaded as public assets.
+.git
+.gitignore
+.github
+.assetsignore
+wrangler.jsonc
+__pycache__
+tools/generate_files.py
