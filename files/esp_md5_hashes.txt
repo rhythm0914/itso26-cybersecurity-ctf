@@ -1,0 +1,8 @@
+# Three password hashes were recovered from a compromised workstation.
+# Usernames were lost, so identify the hash type from its length and
+# crack it with the supplied wordlist (john / hashcat).
+# The cracked password is the flag.
+
+5edc307e43ee4b4fa47e851250c2ed42
+bfd3617727eab0e800e62a776c76381defbc4145
+1c8bfe8f801d79745c4631d09fff36c82aa37fc4cce4fc946683d7b336b63032

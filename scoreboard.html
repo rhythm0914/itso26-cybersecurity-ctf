@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Scoreboard of the IT Skills Olympics 2026 Cybersecurity Category practice CTF.">
+<meta name="color-scheme" content="dark">
+<title>Scoreboard &middot; IT Skills Olympics 2026</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="scoreboard">
+
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<header class="topbar">
+  <div class="wrap topbar__inner">
+    <a class="brand" href="index.html">
+      <span class="brand__mark" aria-hidden="true">&gt;_</span>
+      <span class="brand__text">
+        <strong>IT Skills Olympics 2026</strong>
+        <span>Cybersecurity Category</span>
+      </span>
+    </a>
+    <nav class="topbar__nav" aria-label="Main navigation">
+      <a href="index.html">Home</a>
+      <a href="challenges.html">Challenges</a>
+      <a href="scoreboard.html" aria-current="page">Scoreboard</a>
+      <a href="writeups.html">Writeups</a>
+    </nav>
+    <div class="topbar__status">
+      <span class="pill">Team <b id="hdr-team">not registered</b></span>
+      <span class="pill">Score <b id="hdr-score">0</b></span>
+      <span class="pill pill--timer" data-timer>--:--</span>
+    </div>
+  </div>
+</header>
+
+<main id="main" class="wrap page">
+
+  <section class="section" aria-labelledby="standings-title">
+    <div class="section__head">
+      <h2 id="standings-title">Standings</h2>
+      <span class="muted small">Highest score wins - ties are broken by the earlier last correct submission</span>
+    </div>
+
+    <div class="table-wrap">
+      <table class="data">
+        <caption class="muted small" style="text-align:left;padding:0.6rem 0.8rem">Your team is ranked against the published rival teams from data/scoreboard.json.</caption>
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Team</th>
+            <th scope="col">Score</th>
+            <th scope="col">Solved</th>
+            <th scope="col">Last solve</th>
+          </tr>
+        </thead>
+        <tbody id="standings-body">
+          <tr><td colspan="5" class="muted">Loading standings ...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note" style="margin-top:1rem">
+      <strong>Scores are stored in your browser only.</strong> Nothing is uploaded anywhere.
+      Export your progress as JSON before you clear your browser data or switch machines.
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="myteam-title">
+    <div class="section__head">
+      <h2 id="myteam-title">Your team</h2>
+    </div>
+    <div class="grid-2">
+      <div class="panel">
+        <div class="stat-grid">
+          <span class="stat-card"><span class="stat-card__value" id="my-rank">-</span><span class="stat-card__label">rank</span></span>
+          <span class="stat-card"><span class="stat-card__value" id="my-score">0</span><span class="stat-card__label">points</span></span>
+          <span class="stat-card"><span class="stat-card__value" id="my-solved">0</span><span class="stat-card__label">solved</span></span>
+          <span class="stat-card"><span class="stat-card__value" id="my-hints">0</span><span class="stat-card__label">hints used</span></span>
+          <span class="stat-card"><span class="stat-card__value" id="my-attempts">0</span><span class="stat-card__label">attempts used</span></span>
+          <span class="stat-card"><span class="stat-card__value" id="my-time">-</span><span class="stat-card__label">time left</span></span>
+        </div>
+        <h3 style="margin-top:1.2rem">Progress per category</h3>
+        <div id="topic-breakdown"></div>
+      </div>
+
+      <div class="panel">
+        <h3>Progress backup</h3>
+        <p class="muted">
+          Export writes a JSON file with your team, the clock, every solved challenge, every
+          hint and every attempt. Import restores it on another machine or in another browser.
+          The <em>Reset everything</em> button appears in practice mode
+          (<code>js/config.js</code>: <code>practiceMode: true</code>); in exam simulation mode
+          you can still clear the data with the browser's "clear site data" option.
+        </p>
+        <div class="button-row">
+          <button class="btn btn--primary" type="button" id="export-button">Export progress (JSON)</button>
+          <button class="btn" type="button" id="import-button">Import progress (JSON)</button>
+          <input type="file" id="import-input" accept="application/json,.json" hidden>
+          <button class="btn btn--danger" type="button" id="reset-button" hidden>Reset everything</button>
+        </div>
+        <h3 style="margin-top:1.4rem">Published leaderboard</h3>
+        <p class="muted" style="margin-bottom:0">
+          The rival teams come from <code>data/scoreboard.json</code>. As the organiser you can
+          edit that file by hand (or <code>data/scoreboard.js</code> when the site is opened
+          straight from a file, where the browser blocks JSON fetches). Each entry looks like:
+        </p>
+        <pre>{
+  "name": "Byte Bandits",
+  "school": "Northgate Technical College",
+  "score": 720,
+  "solved": 11,
+  "lastSolve": "2026-10-20T09:47:00Z"
+}</pre>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap footer__inner">
+    <span>IT Skills Olympics 2026 &middot; Cybersecurity Category &middot; practice simulator</span>
+    <span>Scores are stored in your browser only.</span>
+  </div>
+</footer>
+
+<div class="page-status" id="page-status" role="status" aria-live="polite" data-visible="false"></div>
+
+<script src="data/scoreboard.js"></script>
+<script src="js/sha256.js"></script>
+<script src="js/config.js"></script>
+<script src="js/challenges.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

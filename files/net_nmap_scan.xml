@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nmaprun scanner="nmap" args="nmap -sV -O -oX net_nmap_scan.xml 10.0.0.5" start="1760000000" version="7.94" xmloutputversion="1.05">
+<host starttime="1760000000" endtime="1760000003"><address addr="10.0.0.5" addrtype="ipv4"/><hostnames><hostname name="web01.lab.local" type="PTR"/></hostnames><ports>
+    <port protocol="tcp" portid="21"><state state="open"/><service name="ftp" product="vsftpd" version="vsftpd 3.0.3"/></port>
+    <port protocol="tcp" portid="22"><state state="open"/><service name="ssh" product="OpenSSH" version="OpenSSH 8.9p1 Ubuntu 3ubuntu0.4 (protocol 2.0)"/></port>
+    <port protocol="tcp" portid="25"><state state="open"/><service name="smtp" product="Postfix" version="Postfix smtpd 3.6.4"/></port>
+    <port protocol="tcp" portid="53"><state state="open"/><service name="domain" product="ISC" version="ISC BIND 9.18.6"/></port>
+    <port protocol="tcp" portid="80"><state state="open"/><service name="http" product="nginx" version="nginx 1.18.0 (Ubuntu)"/></port>
+    <port protocol="tcp" portid="110"><state state="open"/><service name="pop3" product="Dovecot" version="Dovecot pop3 2.3.16"/></port>
+    <port protocol="tcp" portid="143"><state state="open"/><service name="imap" product="Dovecot" version="Dovecot imap 2.3.16"/></port>
+    <port protocol="tcp" portid="443"><state state="open"/><service name="ssl/http" product="nginx" version="nginx 1.18.0 (Ubuntu)"/></port>
+    <port protocol="tcp" portid="993"><state state="open"/><service name="ssl/imap" product="Dovecot" version="Dovecot imap 2.3.16"/></port>
+    <port protocol="tcp" portid="995"><state state="open"/><service name="pop3s" product="Dovecot" version="Dovecot pop3 2.3.16"/></port>
+    <port protocol="tcp" portid="3389"><state state="open"/><service name="ms-wbt-server" product="Microsoft Terminal Server"/></port>
+</ports>
+</host>
+<runstats><finished time="1760000003" elapsed="3.41"/>
+<hosts total="1" up="1" down="0"/></runstats>
+</nmaprun>

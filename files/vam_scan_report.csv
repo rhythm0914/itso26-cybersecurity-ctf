@@ -1,0 +1,7 @@
+host,port,protocol,cve,plugin_name,severity,cvss_base_score
+10.10.5.12,443/tcp,tcp,CVE-2023-4863,"Apache HTTP Server libwebp heap overflow",Critical,9.8
+10.10.5.12,443/tcp,tcp,CVE-2021-41773,"Apache HTTP Server path traversal",High,7.5
+10.10.5.21,8080/tcp,tcp,CVE-2021-44228,"Apache Log4j2 JNDI remote code execution",High,8.1
+10.10.5.30,25/tcp,tcp,CVE-2020-28017,"Exim SMTP remote code execution",Critical,9.3
+10.10.5.40,445/tcp,tcp,CVE-2019-19781,"Citrix ADC directory traversal",High,8.8
+10.10.5.50,3389/tcp,tcp,CVE-2017-0144,"SMBv1 remote code execution (BlueKeep)",Medium,6.8

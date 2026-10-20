@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="IT Skills Olympics 2026 - Cybersecurity Category. An offline practice CTF: 19 graded challenges, hints, scoring and a simulated competition clock.">
+<meta name="color-scheme" content="dark">
+<title>IT Skills Olympics 2026 &middot; Cybersecurity Category</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="home">
+
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<header class="topbar">
+  <div class="wrap topbar__inner">
+    <a class="brand" href="index.html">
+      <span class="brand__mark" aria-hidden="true">&gt;_</span>
+      <span class="brand__text">
+        <strong>IT Skills Olympics 2026</strong>
+        <span>Cybersecurity Category</span>
+      </span>
+    </a>
+    <nav class="topbar__nav" aria-label="Main navigation">
+      <a href="index.html" aria-current="page">Home</a>
+      <a href="challenges.html">Challenges</a>
+      <a href="scoreboard.html">Scoreboard</a>
+      <a href="writeups.html">Writeups</a>
+    </nav>
+    <div class="topbar__status">
+      <span class="pill">Team <b id="hdr-team">not registered</b></span>
+      <span class="pill">Score <b id="hdr-score">0</b></span>
+      <span class="pill pill--timer" data-timer>--:--</span>
+    </div>
+  </div>
+</header>
+
+<main id="main" class="wrap page">
+
+  <section class="hero">
+    <p class="hero__kicker">Offline practice simulation</p>
+    <h1>Cybersecurity Category</h1>
+    <p class="hero__lede">
+      A complete capture-the-flag platform for the IT Skills Olympics 2026. Register your
+      team of three, start the 90 minute clock and work through 19 graded challenges
+      across the four official areas of the category - plus a trivia round and one
+      hidden tiebreaker. Everything runs in your browser: no backend, no internet, no
+      build step.
+    </p>
+    <div class="stat-row">
+      <span class="stat"><span class="stat__value">19</span><span class="stat__label">graded challenges</span></span>
+      <span class="stat"><span class="stat__value">1500</span><span class="stat__label">points available</span></span>
+      <span class="stat"><span class="stat__value">90:00</span><span class="stat__label">minutes</span></span>
+      <span class="stat"><span class="stat__value">4</span><span class="stat__label">official areas</span></span>
+      <span class="stat"><span class="stat__value">5</span><span class="stat__label">teams of 3</span></span>
+    </div>
+    <div class="button-row">
+      <a class="btn btn--primary" href="#registration">Register your team</a>
+      <a class="btn" href="challenges.html">Challenge board</a>
+      <a class="btn btn--ghost" href="scoreboard.html">Scoreboard</a>
+      <a class="btn btn--ghost" href="writeups.html">Solutions &amp; Kali guide</a>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="what-is-ctf">
+    <div class="section__head">
+      <h2 id="what-is-ctf">What is a CTF?</h2>
+    </div>
+    <div class="grid-2">
+      <div class="panel">
+        <p>
+          A <strong>Capture The Flag</strong> (CTF) is a cybersecurity exercise in which
+          small teams are given a set of practical tasks - decrypting a message, analysing
+          a packet capture, hunting for persistence on a disk image or ranking the risk of
+          a scan report.
+        </p>
+        <p>
+          Every task hides a secret string called a <strong>flag</strong>, for example
+          <code>CTF{some_text_here}</code>. You solve the task, find the flag and submit it
+          to earn points.
+        </p>
+        <p>
+          Teams compete against the clock and against each other; the team with the most
+          points when time runs out wins.
+        </p>
+        <p class="muted" style="margin-bottom:0">
+          This site is a faithful practice simulator of the Cybersecurity Category of the
+          IT Skills Olympics 2026 - it runs completely offline, stores your progress in
+          your own browser and never sends anything over the network.
+        </p>
+      </div>
+      <div class="panel">
+        <h3>Flag format</h3>
+        <p>
+          Every flag of a graded challenge looks like this:
+        </p>
+        <pre>CTF{some_text_here}</pre>
+        <p class="muted">
+          Flags are <strong>case sensitive</strong> unless the challenge says otherwise
+          (the trivia round ignores case and punctuation). For trivia you type the plain
+          answer - the <code>CTF{}</code> wrapper is optional there.
+        </p>
+        <h3>Flag checking</h3>
+        <p class="muted" style="margin-bottom:0">
+          The site never stores a flag in clear text. Only a salted SHA-256 hash of it is
+          stored, and your input is hashed in the browser and compared. The flag is
+          therefore never sent anywhere.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="registration" aria-labelledby="registration-title">
+    <div class="section__head">
+      <h2 id="registration-title">Team registration</h2>
+      <span class="muted small">Teams of exactly three members</span>
+    </div>
+    <div class="grid-2">
+      <form class="panel" id="registration-form" novalidate>
+        <div class="field">
+          <label for="team-name">Team name</label>
+          <input type="text" id="team-name" name="teamName" autocomplete="organization" required placeholder="e.g. Null Pointers">
+        </div>
+        <div class="field">
+          <label for="school">School / organisation</label>
+          <input type="text" id="school" name="school" autocomplete="organization" required placeholder="e.g. Northgate Technical College">
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="member1">Member 1</label>
+            <input type="text" id="member1" name="member1" required placeholder="Full name">
+          </div>
+          <div class="field">
+            <label for="member2">Member 2</label>
+            <input type="text" id="member2" name="member2" required placeholder="Full name">
+          </div>
+          <div class="field">
+            <label for="member3">Member 3</label>
+            <input type="text" id="member3" name="member3" required placeholder="Full name">
+          </div>
+        </div>
+        <p class="hint-text">
+          The registration is stored in this browser only (localStorage). Export it on the
+          scoreboard page if you want to keep a backup.
+        </p>
+        <div class="button-row">
+          <button class="btn btn--primary" type="submit">Save registration</button>
+          <button class="btn" type="button" id="start-button" disabled>Start Competition</button>
+          <button class="btn btn--ghost" type="button" id="reset-button" hidden>Reset everything</button>
+        </div>
+      </form>
+
+      <div class="panel" id="team-card" hidden>
+        <h3>Registered team</h3>
+        <p><strong id="team-name">-</strong><br><span class="muted" id="team-school">-</span></p>
+        <ol id="team-members" class="muted"></ol>
+        <div class="stat-grid">
+          <span class="stat-card"><span class="stat-card__value" id="team-score">0</span><span class="stat-card__label">points</span></span>
+          <span class="stat-card"><span class="stat-card__value" id="team-solved">0</span><span class="stat-card__label">solved</span></span>
+        </div>
+        <p class="muted" id="writeups-lock-note" style="margin-bottom:0"></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="rules-title">
+    <div class="section__head">
+      <h2 id="rules-title">Competition rules</h2>
+    </div>
+    <div class="grid-2">
+      <ul class="rule-list panel">
+        <li>
+          <strong>Teams of exactly three members.</strong>
+          <span class="muted">Register all three names before the clock starts.</span>
+        </li>
+        <li>
+          <strong>Total time: 1 hour 30 minutes.</strong>
+          <span class="muted">The countdown starts when you press "Start Competition" and survives a refresh. When it reaches zero every submission is blocked and the board becomes read only.</span>
+        </li>
+        <li>
+          <strong>No internet - bring your own tools.</strong>
+          <span class="muted">In the real contest there is no network access. Install everything you need on Kali Linux beforehand (nmap, Wireshark/tshark, john, hashcat, hashid, binwalk, exiftool, strings, an offline CyberChef copy and the rockyou wordlist).</span>
+        </li>
+        <li>
+          <strong>Scoring by difficulty.</strong>
+          <span class="muted">Easy = 50, Average = 100, Difficult = 150, Trivia = 30. Maximum 1500 points.</span>
+        </li>
+        <li>
+          <strong>Three hints per challenge, unlocked in order.</strong>
+          <span class="muted">Every hint costs points: Easy -20, Average -60, Difficult -100. Trivia has no hints. A challenge awards max(0, points - total hint cost).</span>
+        </li>
+        <li>
+          <strong>Three attempts per challenge.</strong>
+          <span class="muted">After the third wrong submission the challenge is locked for good - the lock is stored in your browser, so a refresh does not reset it. The attempt limit replaces any cooldown and stops brute forcing of the submit form.</span>
+        </li>
+        <li>
+          <strong>Ranking.</strong>
+          <span class="muted">Highest total score wins. If two teams are level, the team whose <em>last</em> correct submission came earlier ranks higher. One hidden tiebreaker challenge exists for exactly that case - it is not counted in the total score.</span>
+        </li>
+        <li>
+          <strong>Fair play.</strong>
+          <span class="muted">Do not attack or stress the site that hosts the competition, do not share flags with other teams and do not brute force the submission form.</span>
+        </li>
+      </ul>
+
+      <div class="panel">
+        <h3>How scoring works</h3>
+        <table class="points-table">
+          <caption class="muted small" style="text-align:left;padding-bottom:0.5rem">Points per challenge before hints</caption>
+          <thead>
+            <tr><th>Difficulty</th><th>Points</th><th>Cost per hint</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Easy</td><td>50</td><td>-20</td></tr>
+            <tr><td>Average</td><td>100</td><td>-60</td></tr>
+            <tr><td>Difficult</td><td>150</td><td>-100</td></tr>
+            <tr><td>Trivia</td><td>30</td><td>no hints</td></tr>
+          </tbody>
+        </table>
+        <p class="muted" style="margin-top:1rem">
+          Example: a Difficult challenge is worth 150. Unlocking one hint leaves 50
+          points, two hints leave 0 points. A challenge you never solve gives nothing -
+          and an unused hint on an unsolved challenge costs nothing either.
+        </p>
+        <h3>How hints work</h3>
+        <p class="muted" style="margin-bottom:0">
+          Every challenge exposes up to three hints. They unlock strictly in order and
+          each one shows its price before you confirm it. A hint can only be bought while
+          the challenge is still open.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="areas-title">
+    <div class="section__head">
+      <h2 id="areas-title">The four official areas</h2>
+    </div>
+    <div class="grid-2">
+      <div class="panel panel--tight">
+        <h3>1. Essential Security Principles</h3>
+        <p class="muted" style="margin-bottom:0">CIA triad, hashing, encoding, encryption, password security, authentication. Tools: base64, tr, john, hashcat, hashid, python3, CyberChef.</p>
+      </div>
+      <div class="panel panel--tight">
+        <h3>2. Basic Network Setup and Security</h3>
+        <p class="muted" style="margin-bottom:0">IP addressing, subnetting, ports and services, firewalls, packet analysis. Tools: nmap, ipcalc, Wireshark, tshark, iptables.</p>
+      </div>
+      <div class="panel panel--tight">
+        <h3>3. Endpoint Security Concepts</h3>
+        <p class="muted" style="margin-bottom:0">Logs, malware indicators, permissions, persistence, hardening. Tools: grep, logwatch, crontab, systemd, exiftool, binwalk, strings.</p>
+      </div>
+      <div class="panel panel--tight">
+        <h3>4. Vulnerability Assessment and Risk Management</h3>
+        <p class="muted" style="margin-bottom:0">Scan reports, CVSS, risk matrices, remediation. Tools: nmap, OpenVAS/GVM reporting, csvkit, xmllint, CVSS calculators.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="howto-title">
+    <div class="section__head">
+      <h2 id="howto-title">How to play</h2>
+    </div>
+    <ol class="rule-list panel">
+      <li><strong>Register the team</strong><span class="muted">Team name, school and the three member names.</span></li>
+      <li><strong>Prepare your toolkit</strong><span class="muted">On Kali Linux install nmap, wireshark/tshark, john, hashcat, hashid, binwalk, exiftool, strings and an offline copy of CyberChef, plus a wordlist such as rockyou.txt.</span></li>
+      <li><strong>Press "Start Competition"</strong><span class="muted">The 90 minute countdown starts and the challenge board unlocks.</span></li>
+      <li><strong>Download, analyse, submit</strong><span class="muted">Every challenge gives you files in /files. Use your Kali tools, find the flag and submit it in the challenge modal.</span></li>
+      <li><strong>Use hints sparingly</strong><span class="muted">Every hint costs points - a Difficult challenge is worth 150, one hint leaves 50.</span></li>
+      <li><strong>Watch the clock</strong><span class="muted">When the countdown hits zero the board is read only and the final ranking is shown on the scoreboard.</span></li>
+    </ol>
+    <div class="note" style="margin-top:1rem">
+      <strong>Offline first.</strong> This site works from <code>file://</code>, from
+      <code>python3 -m http.server</code> and from a LAN address such as
+      <code>http://192.168.1.20:8000</code>. Over plain HTTP the browser does not expose
+      <code>crypto.subtle</code>, so a bundled pure JavaScript SHA-256 takes over - flag
+      checking keeps working.
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap footer__inner">
+    <span>IT Skills Olympics 2026 &middot; Cybersecurity Category &middot; practice simulator</span>
+    <span>Scores are stored in your browser only.</span>
+  </div>
+</footer>
+
+<div class="page-status" id="page-status" role="status" aria-live="polite" data-visible="false"></div>
+
+<script src="js/sha256.js"></script>
+<script src="js/config.js"></script>
+<script src="js/challenges.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

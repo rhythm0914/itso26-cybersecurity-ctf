@@ -1,0 +1,6 @@
+asset_id,ip_address,owner,business_impact,internet_exposed
+WEB-PUB,10.10.5.12,Marketing,3,yes
+DB-FIN,10.10.5.21,Finance,5,no
+MAIL-01,10.10.5.30,IT Operations,2,yes
+FILE-SRV,10.10.5.40,Human Resources,4,no
+JUMP-01,10.10.5.50,IT Operations,4,yes
