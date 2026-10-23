@@ -276,6 +276,10 @@
   /* team lobby (matchmaking)                                           */
   /* ================================================================== */
 
+  function mySlotIndex() {
+    return state.team && typeof state.team.mySlot === "number" ? state.team.mySlot : null;
+  }
+
   function lobbyPlayers() {
     var team = state.team;
     if (!team) return [];
@@ -283,7 +287,12 @@
     var ready = team.ready || [];
     var out = [];
     for (var i = 0; i < 3; i++) {
-      out.push({ index: i, name: String(members[i] || ""), ready: !!ready[i] });
+      out.push({
+        index: i,
+        name: String(members[i] || ""),
+        ready: !!ready[i],
+        isMe: i === mySlotIndex()
+      });
     }
     return out;
   }
@@ -291,21 +300,85 @@
   function canStart() {
     if (!state.team || started() || over()) return false;
     var members = state.team.members || [];
-    if (members.length !== 3) return false;
+    if (members.length < 3) return false;
     for (var i = 0; i < 3; i++) {
       if (!String(members[i] || "").trim()) return false;
     }
     var ready = state.team.ready || [];
+    if (ready.length < 3) return false;
     for (var i = 0; i < 3; i++) {
       if (!ready[i]) return false;
     }
     return true;
   }
 
-  function toggleReady(index) {
+  function joinLobby(teamName, school, playerName) {
+    if (!teamName || !playerName) return false;
+    state.team = {
+      name: teamName,
+      school: school || "",
+      members: [playerName, "", ""],
+      ready: [false, false, false],
+      mySlot: 0
+    };
+    saveState();
+    renderPage();
+    flash("Lobby created - you joined as player 1.", "ok");
+    return true;
+  }
+
+  function setMyName(name) {
+    if (!state.team) return false;
+    var slot = mySlotIndex();
+    if (slot === null) return false;
+    name = String(name || "").trim();
+    if (!name) return false;
+    state.team.members[slot] = name;
+    saveState();
+    renderPage();
+    return true;
+  }
+
+  function toggleMyReady() {
     if (!state.team) return;
-    var players = lobbyPlayers();
-    if (!players[index].name) return;
+    var slot = mySlotIndex();
+    if (slot === null) return;
+    if (!String(state.team.members[slot] || "").trim()) return;
+    var ready = state.team.ready || [];
+    while (ready.length < 3) ready.push(false);
+    ready[slot] = !ready[slot];
+    state.team.ready = ready;
+    saveState();
+    renderPage();
+    flash("You are now " + (ready[slot] ? "ready" : "not ready") + ".", "info");
+  }
+
+  function joinSlot(index, name) {
+    if (!state.team) return false;
+    if (index < 0 || index > 2) return false;
+    name = String(name || "").trim();
+    if (!name) return false;
+    var members = state.team.members || [];
+    while (members.length < 3) members.push("");
+    var ready = state.team.ready || [];
+    while (ready.length < 3) ready.push(false);
+    members[index] = name;
+    ready[index] = false;
+    state.team.members = members;
+    state.team.ready = ready;
+    if (state.team.mySlot === null) {
+      state.team.mySlot = index;
+    }
+    saveState();
+    renderPage();
+    flash(name + " joined as player " + (index + 1) + ".", "ok");
+    return true;
+  }
+
+  function toggleSlotReady(index) {
+    if (!state.team) return;
+    if (index < 0 || index > 2) return;
+    if (!String(state.team.members[index] || "").trim()) return;
     var ready = state.team.ready || [];
     while (ready.length < 3) ready.push(false);
     ready[index] = !ready[index];
@@ -426,104 +499,123 @@
     var teamCard = byId("team-card");
     var startButton = byId("start-button");
     var endButton = byId("end-button");
-    var playerList = byId("player-list");
+    var playerGrid = byId("player-grid");
     var lobbyStatus = byId("lobby-status");
+    var myNameInput = byId("my-name");
+    var readyToggle = byId("ready-toggle");
 
-    if (form && state.team) {
-      form.elements.teamName.value = state.team.name || "";
-      form.elements.school.value = state.team.school || "";
-      (state.team.members || []).forEach(function (member, index) {
-        if (form.elements["member" + (index + 1)]) {
-          form.elements["member" + (index + 1)].value = member;
-        }
-      });
+    if (form) {
+      if (state.team) {
+        form.hidden = true;
+      } else {
+        form.hidden = false;
+      }
     }
 
     if (teamCard) {
       if (state.team) {
         teamCard.hidden = false;
-        var nameEl = byId("team-name");
-        var schoolEl = byId("team-school");
-        if (nameEl) nameEl.textContent = state.team.name;
+        var teamNameEl = byId("lobby-team-name");
+        var schoolEl = byId("lobby-school");
+        if (teamNameEl) teamNameEl.textContent = state.team.name;
         if (schoolEl) schoolEl.textContent = state.team.school || "-";
-        var teamScore = byId("team-score");
-        if (teamScore) teamScore.textContent = String(totalScore());
-        var teamSolved = byId("team-solved");
-        if (teamSolved) teamSolved.textContent = String(solvedCount());
+
+        var mySlot = mySlotIndex();
+        var players = lobbyPlayers();
+        var allNamed = players.every(function (p) { return !!p.name; });
+        var allReady = allNamed && players.every(function (p) { return p.ready; });
+        var waiting = allNamed ? 3 - players.filter(function (p) { return p.ready; }).length : null;
+        var startedNow = started();
+
+        if (playerGrid) {
+          playerGrid.innerHTML = "";
+          players.forEach(function (player) {
+            var slot = document.createElement("div");
+            slot.className = "player-slot" +
+              (player.name ? "" : " is-empty") +
+              (player.ready ? " is-ready" : "") +
+              (player.isMe ? " is-me" : "");
+            slot.setAttribute("data-slot", String(player.index));
+
+            var dot = document.createElement("span");
+            dot.className = "player__dot";
+            slot.appendChild(dot);
+
+            var name = document.createElement("span");
+            name.className = "player__name" + (player.name ? "" : " is-empty");
+            name.textContent = player.name ? player.name : "Player " + (player.index + 1) + " (empty)";
+            slot.appendChild(name);
+
+            var role = document.createElement("span");
+            role.className = "player__role" + (player.isMe ? " is-me" : "");
+            role.textContent = player.isMe ? "You" : (player.name ? "Player " + (player.index + 1) : "Empty");
+            slot.appendChild(role);
+
+            playerGrid.appendChild(slot);
+          });
+        }
+
+        if (lobbyStatus) {
+          if (!startedNow) {
+            if (!allNamed) {
+              lobbyStatus.textContent = "Fill all three slots before the lobby is ready.";
+              lobbyStatus.className = "lobby-status warn";
+            } else if (allReady) {
+              lobbyStatus.textContent = "All three players are ready - start the competition.";
+              lobbyStatus.className = "lobby-status ok";
+            } else {
+              lobbyStatus.textContent = "Waiting on " + waiting + " player(s) to get ready.";
+              lobbyStatus.className = "lobby-status warn";
+            }
+          } else if (over()) {
+            lobbyStatus.textContent = "Competition finished.";
+            lobbyStatus.className = "lobby-status error";
+          } else {
+            lobbyStatus.textContent = "Competition running - " + formatClock(msLeft()) + " left.";
+            lobbyStatus.className = "lobby-status ok";
+          }
+        }
+
+        if (myNameInput) {
+          myNameInput.value = mySlot === null ? "" : String(state.team.members[mySlot] || "");
+          myNameInput.disabled = startedNow;
+          myNameInput.placeholder = mySlot === null ? "Your name" : "Your name";
+        }
+
+        if (readyToggle) {
+          var myReady = mySlot !== null && !!((state.team.ready || [])[mySlot]);
+          readyToggle.textContent = myReady ? "Ready" : "Not ready";
+          readyToggle.className = "btn btn--primary ready-toggle" + (myReady ? " is-ready" : "");
+          readyToggle.disabled = startedNow || mySlot === null || !String(state.team.members[mySlot] || "").trim();
+          readyToggle.setAttribute("aria-pressed", String(myReady));
+        }
+
+        if (startButton) {
+          if (!startedNow) {
+            startButton.textContent = "Start Competition";
+            startButton.disabled = !canStart();
+            startButton.setAttribute("data-action", "start");
+          } else if (CFG.practiceMode) {
+            startButton.textContent = "Restart competition";
+            startButton.disabled = false;
+            startButton.setAttribute("data-action", "restart");
+          } else if (over()) {
+            startButton.textContent = "Competition finished";
+            startButton.disabled = true;
+            startButton.removeAttribute("data-action");
+          } else {
+            startButton.textContent = "Competition running - " + formatClock(msLeft());
+            startButton.disabled = true;
+            startButton.removeAttribute("data-action");
+          }
+        }
+
+        if (endButton) {
+          endButton.hidden = !startedNow || over();
+        }
       } else {
         teamCard.hidden = true;
       }
-    }
-
-    if (playerList) {
-      playerList.innerHTML = "";
-      var players = lobbyPlayers();
-      var allNamed = players.every(function (p) { return !!p.name; });
-      var allReady = allNamed && players.every(function (p) { return p.ready; });
-      var waiting = allNamed ? 3 - players.filter(function (p) { return p.ready; }).length : null;
-
-      players.forEach(function (player) {
-        var slot = document.createElement("div");
-        slot.className = "player-slot" + (player.name ? "" : " is-empty") + (player.ready ? " is-ready" : "");
-        slot.setAttribute("data-slot", String(player.index));
-
-        var name = document.createElement("span");
-        name.className = "player__name" + (player.name ? "" : " is-empty");
-        name.textContent = player.name ? player.name : "Member " + (player.index + 1) + " (not set)";
-        slot.appendChild(name);
-
-        var toggle = document.createElement("button");
-        toggle.type = "button";
-        toggle.className = "ready-toggle" + (player.ready ? " is-ready" : "");
-        toggle.setAttribute("data-slot", String(player.index));
-        toggle.setAttribute("aria-pressed", String(player.ready));
-        toggle.disabled = !player.name;
-        toggle.textContent = player.name ? (player.ready ? "Ready" : "Not ready") : "—";
-        toggle.title = player.name ? "Toggle ready state for " + player.name : "Set this member's name first";
-        slot.appendChild(toggle);
-
-        playerList.appendChild(slot);
-      });
-    }
-
-    if (lobbyStatus) {
-      if (!state.team) {
-        lobbyStatus.textContent = "Register your team first.";
-        lobbyStatus.className = "lobby-status warn";
-      } else if (!allNamed) {
-        lobbyStatus.textContent = "Fill in all three team members to unlock the lobby.";
-        lobbyStatus.className = "lobby-status warn";
-      } else if (allReady) {
-        lobbyStatus.textContent = "All three players are ready - you can start the competition.";
-        lobbyStatus.className = "lobby-status ok";
-      } else {
-        lobbyStatus.textContent = "Waiting on " + waiting + " player(s) to get ready.";
-        lobbyStatus.className = "lobby-status warn";
-      }
-    }
-
-    if (startButton) {
-      if (!started()) {
-        startButton.textContent = "Start Competition";
-        startButton.disabled = !canStart();
-        startButton.setAttribute("data-action", "start");
-      } else if (CFG.practiceMode) {
-        startButton.textContent = "Restart competition";
-        startButton.disabled = false;
-        startButton.setAttribute("data-action", "restart");
-      } else if (over()) {
-        startButton.textContent = "Competition finished";
-        startButton.disabled = true;
-        startButton.removeAttribute("data-action");
-      } else {
-        startButton.textContent = "Competition running - " + formatClock(msLeft());
-        startButton.disabled = true;
-        startButton.removeAttribute("data-action");
-      }
-    }
-
-    if (endButton) {
-      endButton.hidden = !started() || over();
     }
 
     if (resetButton) {
@@ -543,25 +635,18 @@
     var form = event.currentTarget;
     var teamName = String(form.elements.teamName.value || "").trim();
     var school = String(form.elements.school.value || "").trim();
-    var members = [];
-    for (var i = 1; i <= 3; i++) {
-      var value = String(form.elements["member" + i].value || "").trim();
-      if (!value) {
-        flash("All three team members are required.", "error");
-        form.elements["member" + i].focus();
-        return;
-      }
-      members.push(value);
-    }
+    var playerName = String(form.elements.playerName.value || "").trim();
     if (!teamName) {
       flash("Please enter a team name.", "error");
       form.elements.teamName.focus();
       return;
     }
-    state.team = { name: teamName, school: school, members: members };
-    saveState();
-    renderPage();
-    flash("Team registered. Start the competition when you are ready.", "ok");
+    if (!playerName) {
+      flash("Please enter your name.", "error");
+      form.elements.playerName.focus();
+      return;
+    }
+    joinLobby(teamName, school, playerName);
   }
 
   /* ================================================================== */
@@ -1351,6 +1436,36 @@
       });
     }
 
+    var myNameInput = byId("my-name");
+    if (myNameInput) {
+      myNameInput.addEventListener("input", function () {
+        setMyName(myNameInput.value);
+      });
+    }
+
+    var readyToggle = byId("ready-toggle");
+    if (readyToggle) {
+      readyToggle.addEventListener("click", toggleMyReady);
+    }
+
+    var playerGrid = byId("player-grid");
+    if (playerGrid) {
+      playerGrid.addEventListener("click", function (event) {
+        var slot = closest(event.target, "[data-slot]");
+        if (!slot) return;
+        var index = Number(slot.getAttribute("data-slot"));
+        if (!state.team) return;
+        var players = lobbyPlayers();
+        var player = players[index];
+        if (!player.name) {
+          var name = prompt("Enter your name to join as player " + (index + 1) + ":", "");
+          if (name) joinSlot(index, name);
+          return;
+        }
+        toggleSlotReady(index);
+      });
+    }
+
     var registration = byId("registration-form");
     if (registration) registration.addEventListener("submit", submitRegistration);
 
@@ -1366,17 +1481,6 @@
     var endButton = byId("end-button");
     if (endButton) {
       endButton.addEventListener("click", endCompetition);
-    }
-
-    var playerList = byId("player-list");
-    if (playerList) {
-      playerList.addEventListener("click", function (event) {
-        var toggle = closest(event.target, ".ready-toggle");
-        if (!toggle) return;
-        var slot = toggle.getAttribute("data-slot");
-        if (slot === null) return;
-        toggleReady(Number(slot));
-      });
     }
 
     var resetButton = byId("reset-button");

@@ -112,69 +112,53 @@
 
   <section class="section" id="registration" aria-labelledby="registration-title">
     <div class="section__head">
-      <h2 id="registration-title">Team registration</h2>
-      <span class="muted small">Teams of exactly three members</span>
+      <h2 id="registration-title">Team lobby — matchmaking</h2>
+      <span class="muted small">Each player enters their own name. Start when all three are ready.</span>
     </div>
     <div class="grid-2">
-      <form class="panel" id="registration-form" novalidate>
+      <form class="panel lobby__join" id="registration-form" novalidate>
+        <h3>Join the lobby</h3>
         <div class="field">
           <label for="team-name">Team name</label>
-          <input type="text" id="team-name" name="teamName" autocomplete="organization" required placeholder="e.g. Null Pointers">
+          <input type="text" id="team-name" name="teamName" required placeholder="e.g. Null Pointers">
         </div>
         <div class="field">
           <label for="school">School / organisation</label>
-          <input type="text" id="school" name="school" autocomplete="organization" required placeholder="e.g. Northgate Technical College">
+          <input type="text" id="school" name="school" required placeholder="e.g. Northgate Technical College">
         </div>
-        <div class="field-row">
-          <div class="field">
-            <label for="member1">Member 1</label>
-            <input type="text" id="member1" name="member1" required placeholder="Full name">
-          </div>
-          <div class="field">
-            <label for="member2">Member 2</label>
-            <input type="text" id="member2" name="member2" required placeholder="Full name">
-          </div>
-          <div class="field">
-            <label for="member3">Member 3</label>
-            <input type="text" id="member3" name="member3" required placeholder="Full name">
-          </div>
+        <div class="field">
+          <label for="player-name">Your name</label>
+          <input type="text" id="player-name" name="playerName" required placeholder="Your full name">
         </div>
         <p class="hint-text">
-          The registration is stored in this browser only (localStorage). Export it on the
-          scoreboard page if you want to keep a backup.
+          Stored in this browser only. Each teammate joins on their own device with the same team name.
+          Export your progress on the scoreboard page to keep a backup.
         </p>
         <div class="button-row">
-          <button class="btn btn--primary" type="submit">Save registration</button>
-          <button class="btn btn--ghost" type="button" id="reset-button" hidden>Reset everything</button>
+          <button class="btn btn--primary btn--block" type="submit">Create lobby</button>
+          <button class="btn btn--ghost btn--block" type="button" id="reset-button" hidden>Reset everything</button>
         </div>
       </form>
 
-      <div class="panel" id="team-card" hidden>
-        <h3>Registered team</h3>
-        <p><strong id="team-name">-</strong><br><span class="muted" id="team-school">-</span></p>
-        <div class="stat-grid">
-          <span class="stat-card"><span class="stat-card__value" id="team-score">0</span><span class="stat-card__label">points</span></span>
-          <span class="stat-card"><span class="stat-card__value" id="team-solved">0</span><span class="stat-card__label">solved</span></span>
+      <div class="panel lobby" id="team-card" hidden>
+        <div class="lobby__team">
+          <span class="badge badge--solved" id="lobby-team-name">-</span>
+          <span class="badge" id="lobby-school">-</span>
+        </div>
+        <div class="player-grid" id="player-grid"></div>
+        <div class="lobby-status" id="lobby-status" role="status" aria-live="polite"></div>
+        <div class="lobby__controls">
+          <div class="field my-name-field">
+            <label for="my-name">Your name</label>
+            <input type="text" id="my-name" placeholder="Your name">
+          </div>
+          <button class="btn btn--primary ready-toggle" type="button" id="ready-toggle" disabled>Not ready</button>
+          <div class="button-row lobby__actions">
+            <button class="btn btn--primary btn--block" type="button" id="start-button" disabled>Start Competition</button>
+            <button class="btn btn--end btn--block" type="button" id="end-button" hidden>End Competition</button>
+          </div>
         </div>
         <p class="muted" id="writeups-lock-note" style="margin-bottom:0"></p>
-      </div>
-    </div>
-  </section>
-
-  <section class="section" id="lobby" aria-labelledby="lobby-title">
-    <div class="section__head">
-      <h2 id="lobby-title">Team lobby &mdash; matchmaking</h2>
-      <span class="muted small">Up to three players. Everyone must be ready before the clock starts.</span>
-    </div>
-    <div class="grid-2">
-      <div class="panel lobby">
-        <h3>Players</h3>
-        <div class="player-list" id="player-list"></div>
-        <div class="lobby-status" id="lobby-status" role="status" aria-live="polite"></div>
-        <div class="button-row lobby__actions">
-          <button class="btn btn--primary btn--block" type="button" id="start-button" disabled>Start Competition</button>
-          <button class="btn btn--end btn--block" type="button" id="end-button" hidden>End Competition</button>
-        </div>
       </div>
     </div>
   </section>
