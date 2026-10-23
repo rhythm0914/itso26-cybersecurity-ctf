@@ -273,6 +273,60 @@
   }
 
   /* ================================================================== */
+  /* team lobby (matchmaking)                                           */
+  /* ================================================================== */
+
+  function lobbyPlayers() {
+    var team = state.team;
+    if (!team) return [];
+    var members = team.members || [];
+    var ready = team.ready || [];
+    var out = [];
+    for (var i = 0; i < 3; i++) {
+      out.push({ index: i, name: String(members[i] || ""), ready: !!ready[i] });
+    }
+    return out;
+  }
+
+  function canStart() {
+    if (!state.team || started() || over()) return false;
+    var members = state.team.members || [];
+    if (members.length !== 3) return false;
+    for (var i = 0; i < 3; i++) {
+      if (!String(members[i] || "").trim()) return false;
+    }
+    var ready = state.team.ready || [];
+    for (var i = 0; i < 3; i++) {
+      if (!ready[i]) return false;
+    }
+    return true;
+  }
+
+  function toggleReady(index) {
+    if (!state.team) return;
+    var players = lobbyPlayers();
+    if (!players[index].name) return;
+    var ready = state.team.ready || [];
+    while (ready.length < 3) ready.push(false);
+    ready[index] = !ready[index];
+    state.team.ready = ready;
+    saveState();
+    renderPage();
+    flash("Player " + (index + 1) + " is now " + (ready[index] ? "ready" : "not ready") + ".", "info");
+  }
+
+  function endCompetition() {
+    if (!started() || over()) return;
+    if (!window.confirm("End the competition early? The board becomes read only and every submission is blocked.")) {
+      return;
+    }
+    state.endAt = Date.now();
+    saveState();
+    renderPage();
+    flash("Competition ended early - the board is now read only.", "error");
+  }
+
+  /* ================================================================== */
   /* hashing                                                            */
   /* ================================================================== */
 
@@ -371,7 +425,9 @@
     var form = byId("registration-form");
     var teamCard = byId("team-card");
     var startButton = byId("start-button");
-    var resetButton = byId("reset-button");
+    var endButton = byId("end-button");
+    var playerList = byId("player-list");
+    var lobbyStatus = byId("lobby-status");
 
     if (form && state.team) {
       form.elements.teamName.value = state.team.name || "";
@@ -388,28 +444,68 @@
         teamCard.hidden = false;
         var nameEl = byId("team-name");
         var schoolEl = byId("team-school");
-        var membersEl = byId("team-members");
         if (nameEl) nameEl.textContent = state.team.name;
         if (schoolEl) schoolEl.textContent = state.team.school || "-";
-        if (membersEl) {
-          membersEl.innerHTML = "";
-          (state.team.members || []).forEach(function (member, index) {
-            var li = document.createElement("li");
-            li.textContent = (index + 1) + ". " + member;
-            membersEl.appendChild(li);
-          });
-        }
         var teamScore = byId("team-score");
         if (teamScore) teamScore.textContent = String(totalScore());
+        var teamSolved = byId("team-solved");
+        if (teamSolved) teamSolved.textContent = String(solvedCount());
       } else {
         teamCard.hidden = true;
+      }
+    }
+
+    if (playerList) {
+      playerList.innerHTML = "";
+      var players = lobbyPlayers();
+      var allNamed = players.every(function (p) { return !!p.name; });
+      var allReady = allNamed && players.every(function (p) { return p.ready; });
+      var waiting = allNamed ? 3 - players.filter(function (p) { return p.ready; }).length : null;
+
+      players.forEach(function (player) {
+        var slot = document.createElement("div");
+        slot.className = "player-slot" + (player.name ? "" : " is-empty") + (player.ready ? " is-ready" : "");
+        slot.setAttribute("data-slot", String(player.index));
+
+        var name = document.createElement("span");
+        name.className = "player__name" + (player.name ? "" : " is-empty");
+        name.textContent = player.name ? player.name : "Member " + (player.index + 1) + " (not set)";
+        slot.appendChild(name);
+
+        var toggle = document.createElement("button");
+        toggle.type = "button";
+        toggle.className = "ready-toggle" + (player.ready ? " is-ready" : "");
+        toggle.setAttribute("data-slot", String(player.index));
+        toggle.setAttribute("aria-pressed", String(player.ready));
+        toggle.disabled = !player.name;
+        toggle.textContent = player.name ? (player.ready ? "Ready" : "Not ready") : "—";
+        toggle.title = player.name ? "Toggle ready state for " + player.name : "Set this member's name first";
+        slot.appendChild(toggle);
+
+        playerList.appendChild(slot);
+      });
+    }
+
+    if (lobbyStatus) {
+      if (!state.team) {
+        lobbyStatus.textContent = "Register your team first.";
+        lobbyStatus.className = "lobby-status warn";
+      } else if (!allNamed) {
+        lobbyStatus.textContent = "Fill in all three team members to unlock the lobby.";
+        lobbyStatus.className = "lobby-status warn";
+      } else if (allReady) {
+        lobbyStatus.textContent = "All three players are ready - you can start the competition.";
+        lobbyStatus.className = "lobby-status ok";
+      } else {
+        lobbyStatus.textContent = "Waiting on " + waiting + " player(s) to get ready.";
+        lobbyStatus.className = "lobby-status warn";
       }
     }
 
     if (startButton) {
       if (!started()) {
         startButton.textContent = "Start Competition";
-        startButton.disabled = !state.team;
+        startButton.disabled = !canStart();
         startButton.setAttribute("data-action", "start");
       } else if (CFG.practiceMode) {
         startButton.textContent = "Restart competition";
@@ -424,6 +520,10 @@
         startButton.disabled = true;
         startButton.removeAttribute("data-action");
       }
+    }
+
+    if (endButton) {
+      endButton.hidden = !started() || over();
     }
 
     if (resetButton) {
@@ -1260,6 +1360,22 @@
         var action = startButton.getAttribute("data-action");
         if (action === "start") startCompetition();
         else if (action === "restart") restartCompetition();
+      });
+    }
+
+    var endButton = byId("end-button");
+    if (endButton) {
+      endButton.addEventListener("click", endCompetition);
+    }
+
+    var playerList = byId("player-list");
+    if (playerList) {
+      playerList.addEventListener("click", function (event) {
+        var toggle = closest(event.target, ".ready-toggle");
+        if (!toggle) return;
+        var slot = toggle.getAttribute("data-slot");
+        if (slot === null) return;
+        toggleReady(Number(slot));
       });
     }
 

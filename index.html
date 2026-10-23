@@ -145,7 +145,6 @@
         </p>
         <div class="button-row">
           <button class="btn btn--primary" type="submit">Save registration</button>
-          <button class="btn" type="button" id="start-button" disabled>Start Competition</button>
           <button class="btn btn--ghost" type="button" id="reset-button" hidden>Reset everything</button>
         </div>
       </form>
@@ -153,12 +152,29 @@
       <div class="panel" id="team-card" hidden>
         <h3>Registered team</h3>
         <p><strong id="team-name">-</strong><br><span class="muted" id="team-school">-</span></p>
-        <ol id="team-members" class="muted"></ol>
         <div class="stat-grid">
           <span class="stat-card"><span class="stat-card__value" id="team-score">0</span><span class="stat-card__label">points</span></span>
           <span class="stat-card"><span class="stat-card__value" id="team-solved">0</span><span class="stat-card__label">solved</span></span>
         </div>
         <p class="muted" id="writeups-lock-note" style="margin-bottom:0"></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="lobby" aria-labelledby="lobby-title">
+    <div class="section__head">
+      <h2 id="lobby-title">Team lobby &mdash; matchmaking</h2>
+      <span class="muted small">Up to three players. Everyone must be ready before the clock starts.</span>
+    </div>
+    <div class="grid-2">
+      <div class="panel lobby">
+        <h3>Players</h3>
+        <div class="player-list" id="player-list"></div>
+        <div class="lobby-status" id="lobby-status" role="status" aria-live="polite"></div>
+        <div class="button-row lobby__actions">
+          <button class="btn btn--primary btn--block" type="button" id="start-button" disabled>Start Competition</button>
+          <button class="btn btn--end btn--block" type="button" id="end-button" hidden>End Competition</button>
+        </div>
       </div>
     </div>
   </section>
