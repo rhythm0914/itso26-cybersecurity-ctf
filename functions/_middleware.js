@@ -3,6 +3,18 @@
  * Applied to every request under /api/.
  */
 export const onRequest = async (context, next) => {
+  try {
+    return await handleRequest(context, next);
+  } catch (err) {
+    return json({
+      error: "middleware threw",
+      message: err.message,
+      stack: err.stack
+    }, 500);
+  }
+};
+
+async function handleRequest(context, next) {
   const { request } = context;
   const url = new URL(request.url);
 
@@ -31,7 +43,7 @@ export const onRequest = async (context, next) => {
     }
   }
 
-  // D1 binding must be configured in Pages dashboard (Settings -> Functions -> D1 databases)
+  // D1 binding check
   if (!context.env || !context.env.DB) {
     return json({
       error: "database not configured",
@@ -39,8 +51,20 @@ export const onRequest = async (context, next) => {
     }, 503);
   }
 
-  return json({ ok: true, env: Object.keys(context.env || {}), hasDB: !!context.env.DB }, 200);
-};
+  const res = await next().catch((err) => {
+    return json({
+      error: "route handler threw",
+      message: err.message,
+      stack: err.stack
+    }, 500);
+  });
+
+  // Add CORS headers to every response
+  const headers = new Headers(res.headers);
+  headers.set("Access-Control-Allow-Origin", "*");
+  headers.set("Access-Control-Allow-Headers", "Content-Type");
+  return new Response(res.body, { status: res.status, statusText: res.statusText, headers });
+}
 
 const json = (body, status = 200) =>
   new Response(JSON.stringify(body), {
