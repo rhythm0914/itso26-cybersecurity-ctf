@@ -5,6 +5,18 @@
  * Sets an HttpOnly-ish cookie (ctf_member) identifying the caller's member row.
  */
 export const onRequestPost = async (context) => {
+  try {
+    return await handleCreate(context);
+  } catch (err) {
+    return json({
+      error: "route handler threw",
+      message: err.message,
+      stack: err.stack
+    }, 500);
+  }
+};
+
+async function handleCreate(context) {
   const { env, request } = context;
   let body = {};
   if (request.method === "POST") {
@@ -13,7 +25,7 @@ export const onRequestPost = async (context) => {
       try {
         body = JSON.parse(await request.text());
       } catch (e) {
-        return json({ error: "invalid json body" }, 400);
+        return json({ error: "invalid json body", message: e.message }, 400);
       }
     }
   }
