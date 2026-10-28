@@ -39,7 +39,13 @@ export const onRequest = async (context, next) => {
     }, 503);
   }
 
-  const res = await next();
+  const res = await next().catch((err) => {
+    return json({
+      error: "route handler threw",
+      message: err.message,
+      stack: err.stack
+    }, 500);
+  });
 
   // Add CORS headers to every response
   const headers = new Headers(res.headers);
