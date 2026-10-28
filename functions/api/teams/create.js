@@ -1,6 +1,6 @@
 /**
  * POST /api/teams/create
- * Body: { name, school, slug?, motto?, description?, recruitment? }
+ * Body: { name, school, slug?, motto?, description? }
  *
  * All numeric bind values are wrapped in String() to avoid D1 datatype
  * mismatch on the Pages Workers runtime.
@@ -56,7 +56,7 @@ export const onRequestPost = async (context) => {
           "INSERT INTO teams (id, name, school, created_at) VALUES (?, ?, ?, ?)"
         ).bind(teamId, teamName, school, String(now)).run();
         await env.DB.prepare(
-          "UPDATE teams SET slug = ?, motto = ?, description = ?, recruitment = ?, max_size = 3, captain_user_id = ?, status = 'open', updated_at = ? WHERE id = ?"
+          "UPDATE teams SET slug = ?, motto = ?, description = ?, max_size = 3, captain_user_id = ?, status = 'open', updated_at = ? WHERE id = ?"
         ).bind(slug, motto, description, session.userId, String(now), teamId).run();
         await env.DB.prepare(
           "INSERT INTO team_members (id, team_id, slot_index, name, user_id, is_captain, joined_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
