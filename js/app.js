@@ -618,6 +618,7 @@
       }
     }
 
+    var resetButton = byId("reset-button");
     if (resetButton) {
       resetButton.hidden = !CFG.practiceMode;
     }
