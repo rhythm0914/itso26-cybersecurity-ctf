@@ -1,6 +1,11 @@
 /**
  * GET /api/teams/:teamId
- * Returns team + members. Uses ctf_member cookie to scope visibility.
+ * Returns team + members.
+ * PATCH /api/teams/:teamId
+ * Body: { slot, name, ready }
+ * Updates a member's name and/or ready state. Only the member themselves
+ * (identified by ctf_member cookie) can update their own row; the team
+ * creator (slot 0) can update any slot.
  */
 export const onRequestGet = async (context) => {
   const { env, request } = context;
@@ -42,6 +47,97 @@ export const onRequestGet = async (context) => {
     })),
   });
 };
+
+export const onRequestPatch = async (context) => {
+  const { env, request } = context;
+  const { teamId } = context.params;
+
+  const memberId = getMemberCookie(request);
+  if (!memberId) return json({ error: "not identified" }, 401);
+
+  let body = {};
+  const ct = request.headers.get("content-type") || "";
+  if (ct.includes("application/json")) {
+    try {
+      body = JSON.parse(await request.text());
+    } catch (e) {
+      return json({ error: "invalid json body" }, 400);
+    }
+  }
+
+  const slot = Number(body.slot);
+  const name = body.name !== undefined ? String(body.name || "").trim() : null;
+  const ready = body.ready !== undefined ? Boolean(body.ready) : null;
+
+  if (slot === undefined || slot === null || slot < 0 || slot > 2) {
+    return json({ error: "slot must be 0, 1 or 2" }, 400);
+  }
+
+  if (name === null && ready === null) {
+    return json({ error: "nothing to update" }, 400);
+  }
+
+  // Identify caller's membership in this team
+  let caller;
+  try {
+    caller = await env.DB.prepare(
+      "SELECT id, slot_index FROM team_members WHERE id = ? AND team_id = ?"
+    ).bind(memberId, teamId).first();
+  } catch (e) {
+    return json({ error: "database error" }, 500);
+  }
+
+  if (!caller) return json({ error: "you are not a member of this team" }, 404);
+
+  const isCreator = caller.slot_index === 0;
+  const isOwnRow = caller.id === await getMemberRowId(env, teamId, slot);
+
+  // Only the creator can edit another member's row; anyone can edit their own
+  if (!isCreator && !isOwnRow) {
+    return json({ error: "you can only update your own member row" }, 403);
+  }
+
+  // Build the update dynamically
+  const sets = [];
+  const params = [];
+  if (name !== null) {
+    sets.push("name = ?");
+    params.push(name);
+  }
+  if (ready !== null) {
+    sets.push("is_ready = ?");
+    params.push(ready ? 1 : 0);
+  }
+  params.push(slot);
+
+  try {
+    await env.DB.prepare(
+      "UPDATE team_members SET " + sets.join(", ") + " WHERE slot_index = ? AND team_id = ?"
+    ).bind(...params, teamId).run();
+  } catch (e) {
+    return json({ error: "could not update member" }, 500);
+  }
+
+  return json({ ok: true, slot });
+};
+
+async function getMemberRowId(env, teamId, slot) {
+  let row;
+  try {
+    row = await env.DB.prepare(
+      "SELECT id FROM team_members WHERE team_id = ? AND slot_index = ?"
+    ).bind(teamId, slot).first();
+  } catch (e) {
+    return null;
+  }
+  return row ? row.id : null;
+}
+
+function getMemberCookie(request) {
+  const cookie = request.headers.get("cookie") || "";
+  const match = cookie.match(/(?:^|;\s*)ctf_member=([^;]+)/);
+  return match ? match[1] : null;
+}
 
 const json = (body, status = 200) =>
   new Response(JSON.stringify(body), {

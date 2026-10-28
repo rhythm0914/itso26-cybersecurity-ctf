@@ -396,6 +396,7 @@
     }).then(function (data) {
       state.joinCode = data.joinCode;
       return loadTeam().then(function () {
+        state.joinCode = data.joinCode;
         renderPage();
         flash("Lobby created - you joined as player 1. Share the join code: " + data.joinCode, "ok");
         return true;
@@ -428,6 +429,7 @@
       method: "POST",
       body: { code: code, name: name }
     }).then(function (data) {
+      state.joinCode = null;
       return loadTeam().then(function () {
         renderPage();
         flash("Joined team " + esc(data.team.name) + " as player " + (data.member.slot + 1) + ".", "ok");
@@ -446,7 +448,12 @@
     state.team.members[slot] = name;
     saveState();
     renderPage();
-    return true;
+    return apiFetch("/api/teams/" + state.team.id, {
+      method: "PATCH",
+      body: { slot: slot, name: name }
+    }).catch(function (e) {
+      flash("Name saved locally but could not sync to server.", "warn");
+    });
   }
 
   function toggleMyReady() {
@@ -461,6 +468,12 @@
     saveState();
     renderPage();
     flash("You are now " + (ready[slot] ? "ready" : "not ready") + ".", "info");
+    return apiFetch("/api/teams/" + state.team.id, {
+      method: "PATCH",
+      body: { slot: slot, ready: ready[slot] }
+    }).catch(function (e) {
+      flash("Ready state saved locally but could not sync to server.", "warn");
+    });
   }
 
   function joinSlot(index, name) {
@@ -482,13 +495,21 @@
     saveState();
     renderPage();
     flash(name + " joined as player " + (index + 1) + ".", "ok");
-    return true;
+    return apiFetch("/api/teams/" + state.team.id, {
+      method: "PATCH",
+      body: { slot: index, name: name }
+    }).catch(function (e) {
+      flash("Slot saved locally but could not sync to server.", "warn");
+    });
   }
 
   function toggleSlotReady(index) {
     if (!state.team) return;
     if (index < 0 || index > 2) return;
     if (!String(state.team.members[index] || "").trim()) return;
+    var mySlot = mySlotIndex();
+    // Only the creator can toggle another player's ready state
+    if (index !== mySlot && mySlot !== 0) return;
     var ready = state.team.ready || [];
     while (ready.length < 3) ready.push(false);
     ready[index] = !ready[index];
@@ -496,6 +517,12 @@
     saveState();
     renderPage();
     flash("Player " + (index + 1) + " is now " + (ready[index] ? "ready" : "not ready") + ".", "info");
+    return apiFetch("/api/teams/" + state.team.id, {
+      method: "PATCH",
+      body: { slot: index, ready: ready[index] }
+    }).catch(function (e) {
+      flash("Ready state saved locally but could not sync to server.", "warn");
+    });
   }
 
   function endCompetition() {
@@ -610,12 +637,15 @@
     var joinForm = byId("join-form");
     var teamCard = byId("team-card");
     var joinCodeEl = byId("lobby-join-code");
+    var joinCodeCopy = byId("lobby-join-code-copy");
     var startButton = byId("start-button");
     var endButton = byId("end-button");
     var playerGrid = byId("player-grid");
     var lobbyStatus = byId("lobby-status");
     var myNameInput = byId("my-name");
     var readyToggle = byId("ready-toggle");
+    var creatorOnly = byId("lobby-creator-only");
+    var memberOnly = byId("lobby-member-only");
 
     if (form) {
       if (state.team) {
@@ -636,9 +666,22 @@
         var schoolEl = byId("lobby-school");
         if (teamNameEl) teamNameEl.textContent = state.team.name;
         if (schoolEl) schoolEl.textContent = state.team.school || "-";
-        if (joinCodeEl) joinCodeEl.textContent = "code: " + (state.joinCode || "-");
 
         var mySlot = mySlotIndex();
+        var isCreator = mySlot === 0;
+
+        // Join code visible only to the creator
+        if (joinCodeEl) {
+          joinCodeEl.textContent = isCreator ? (state.joinCode || "—") : "—";
+        }
+        if (joinCodeCopy) {
+          joinCodeCopy.hidden = !isCreator;
+        }
+
+        // Creator vs member controls
+        if (creatorOnly) creatorOnly.hidden = !isCreator;
+        if (memberOnly) memberOnly.hidden = isCreator;
+
         var players = lobbyPlayers();
         var allNamed = players.every(function (p) { return !!p.name; });
         var allReady = allNamed && players.every(function (p) { return p.ready; });
@@ -659,6 +702,11 @@
             dot.className = "player__dot";
             slot.appendChild(dot);
 
+            var num = document.createElement("span");
+            num.className = "player__slot-num";
+            num.textContent = String(player.index + 1);
+            slot.appendChild(num);
+
             var name = document.createElement("span");
             name.className = "player__name" + (player.name ? "" : " is-empty");
             name.textContent = player.name ? player.name : "Player " + (player.index + 1) + " (empty)";
@@ -668,6 +716,11 @@
             role.className = "player__role" + (player.isMe ? " is-me" : "");
             role.textContent = player.isMe ? "You" : (player.name ? "Player " + (player.index + 1) : "Empty");
             slot.appendChild(role);
+
+            var readyBadge = document.createElement("span");
+            readyBadge.className = "badge " + (player.ready ? "badge--solved" : "badge--locked");
+            readyBadge.textContent = player.ready ? "ready" : "pending";
+            slot.appendChild(readyBadge);
 
             playerGrid.appendChild(slot);
           });
@@ -713,23 +766,27 @@
             startButton.textContent = "Start Competition";
             startButton.disabled = !canStart();
             startButton.setAttribute("data-action", "start");
+            startButton.hidden = !isCreator;
           } else if (CFG.practiceMode) {
             startButton.textContent = "Restart competition";
             startButton.disabled = false;
             startButton.setAttribute("data-action", "restart");
+            startButton.hidden = !isCreator;
           } else if (over()) {
             startButton.textContent = "Competition finished";
             startButton.disabled = true;
             startButton.removeAttribute("data-action");
+            startButton.hidden = !isCreator;
           } else {
             startButton.textContent = "Competition running - " + formatClock(msLeft());
             startButton.disabled = true;
             startButton.removeAttribute("data-action");
+            startButton.hidden = !isCreator;
           }
         }
 
         if (endButton) {
-          endButton.hidden = !startedNow || over();
+          endButton.hidden = !isCreator || !startedNow || over();
         }
       } else {
         teamCard.hidden = true;
@@ -1612,8 +1669,20 @@
     var resetButton = byId("reset-button");
     if (resetButton) {
       resetButton.addEventListener("click", function () {
-      leaveTeam();
-    });
+        leaveTeam();
+      });
+    }
+
+    var joinCodeCopy = byId("lobby-join-code-copy");
+    if (joinCodeCopy) {
+      joinCodeCopy.addEventListener("click", function () {
+        var code = state.joinCode || "";
+        if (!code) return;
+        navigator.clipboard.writeText(code).then(function () {
+          joinCodeCopy.textContent = "Copied!";
+          setTimeout(function () { joinCodeCopy.textContent = "Copy"; }, 1200);
+        });
+      });
     }
 
     var exportButton = byId("export-button");

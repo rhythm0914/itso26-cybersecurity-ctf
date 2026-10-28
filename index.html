@@ -162,20 +162,29 @@
         <div class="lobby__team">
           <span class="badge badge--solved" id="lobby-team-name">-</span>
           <span class="badge" id="lobby-school">-</span>
-          <span class="badge badge--points" id="lobby-join-code" style="margin-left:auto">code: -</span>
+          <div id="lobby-join-code-wrap" style="margin-left:auto">
+            <span class="badge badge--points" id="lobby-join-code">code: —</span>
+            <button class="btn btn--ghost btn--small" id="lobby-join-code-copy" hidden>Copy</button>
+          </div>
         </div>
         <div class="player-grid" id="player-grid"></div>
         <div class="lobby-status" id="lobby-status" role="status" aria-live="polite"></div>
         <div class="lobby__controls">
-          <div class="field my-name-field">
+          <div class="field my-name-field" id="lobby-creator-only">
             <label for="my-name">Your name</label>
             <input type="text" id="my-name" placeholder="Your name">
+          </div>
+          <div class="field my-name-field" id="lobby-member-only">
+            <label for="my-name">Your name</label>
+            <input type="text" id="my-name" placeholder="Your name" readonly>
+            <p class="hint-text small" style="margin-top:0.25rem">Only the team creator can edit names.</p>
           </div>
           <button class="btn btn--primary ready-toggle" type="button" id="ready-toggle" disabled>Not ready</button>
           <div class="button-row lobby__actions">
             <button class="btn btn--primary btn--block" type="button" id="start-button" disabled>Start Competition</button>
             <button class="btn btn--end btn--block" type="button" id="end-button" hidden>End Competition</button>
           </div>
+          <button class="btn btn--ghost btn--block" type="button" id="reset-button">Leave team</button>
         </div>
         <p class="muted" id="writeups-lock-note" style="margin-bottom:0"></p>
       </div>
