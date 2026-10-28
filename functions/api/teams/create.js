@@ -61,8 +61,8 @@ export const onRequestPost = async (context) => {
           "UPDATE teams SET slug = ?, motto = ?, description = ?, recruitment = ?, max_size = 3, captain_user_id = ?, status = 'open', updated_at = ? WHERE id = ?"
         ).bind(slug, motto, description, String(recruitment), session.userId, String(now), teamId).run();
         await env.DB.prepare(
-          "INSERT INTO team_members (id, team_id, slot_index, name, user_id, is_captain, joined_at) VALUES (?, ?, 0, ?, ?, 1, ?)"
-        ).bind(memberIdNew, teamId, teamName, session.userId, "1", String(now)).run();
+          "INSERT INTO team_members (id, team_id, slot_index, name, user_id, is_captain, joined_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
+        ).bind(memberIdNew, teamId, "0", teamName, session.userId, "1", String(now)).run();
       } catch (e) { return localJson({ error: "could not create team", message: String(e.message || e) }, 500); }
     } else {
       if (!memberId) return errorResponse("authentication required", 401);
@@ -76,8 +76,8 @@ export const onRequestPost = async (context) => {
           "UPDATE teams SET slug = ?, motto = ?, description = ?, recruitment = ?, max_size = 3, captain_user_id = NULL, status = 'open', updated_at = ? WHERE id = ?"
         ).bind(slug, motto, description, String(recruitment), String(now), teamId).run();
         await env.DB.prepare(
-          "INSERT INTO team_members (id, team_id, slot_index, name, is_captain, joined_at) VALUES (?, ?, 0, ?, 1, ?)"
-        ).bind(memberIdNew, teamId, teamName, "1", String(now)).run();
+          "INSERT INTO team_members (id, team_id, slot_index, name, is_captain, joined_at) VALUES (?, ?, ?, ?, ?, ?)"
+        ).bind(memberIdNew, teamId, "0", teamName, "1", String(now)).run();
       } catch (e) { return errorResponse("could not create team", 500); }
     }
 
