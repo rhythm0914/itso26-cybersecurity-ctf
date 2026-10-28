@@ -63,7 +63,7 @@ async function handleCreate(context) {
     return json({ error: "could not create team", message: e.message }, 500);
   }
 
-  return json(
+  const res = json(
     {
       ok: true,
       team: { id: teamId, name: teamName, school, created_at: now },
@@ -71,10 +71,9 @@ async function handleCreate(context) {
       joinCode,
     },
     200
-  ).then((res) => {
-    res.headers.set("Set-Cookie", `ctf_member=${memberId}; Path=/; Max-Age=604800; SameSite=Lax`);
-    return res;
-  });
+  );
+  res.headers.set("Set-Cookie", `ctf_member=${memberId}; Path=/; Max-Age=604800; SameSite=Lax`);
+  return res;
 };
 
 const json = (body, status = 200) =>

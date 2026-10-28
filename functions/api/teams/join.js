@@ -75,17 +75,16 @@ export const onRequestPost = async (context) => {
 
   const team = await env.DB.prepare("SELECT * FROM teams WHERE id = ?").bind(teamId).first();
 
-  return json(
+  const res = json(
     {
       ok: true,
       team: { id: team.id, name: team.name, school: team.school, created_at: team.created_at },
       member: { id: memberId, slot, name },
     },
     200
-  ).then((res) => {
-    res.headers.set("Set-Cookie", `ctf_member=${memberId}; Path=/; Max-Age=604800; SameSite=Lax`);
-    return res;
-  });
+  );
+  res.headers.set("Set-Cookie", `ctf_member=${memberId}; Path=/; Max-Age=604800; SameSite=Lax`);
+  return res;
 };
 
 const json = (body, status = 200) =>
