@@ -25,9 +25,14 @@ export const onRequestPost = async (context) => {
   if (school.length > 100) return json({ error: "school too long" }, 400);
 
   const now = Date.now();
-  const teamId = crypto.randomUUID();
-  const memberId = crypto.randomUUID();
-  const joinCode = crypto.randomUUID();
+  let teamId, memberId, joinCode;
+  try {
+    teamId = crypto.randomUUID();
+    memberId = crypto.randomUUID();
+    joinCode = crypto.randomUUID();
+  } catch (e) {
+    return json({ error: "uuid generation failed", message: e.message }, 500);
+  }
 
   try {
     await env.DB.prepare(
@@ -43,7 +48,7 @@ export const onRequestPost = async (context) => {
       "INSERT INTO join_codes (code, team_id, expires_at, max_uses, uses_left, created_at) VALUES (?, ?, ?, 2, 2, ?)"
     ).bind(joinCode, teamId, expiresAt, now).run();
   } catch (e) {
-    return json({ error: "could not create team" }, 500);
+    return json({ error: "could not create team", message: e.message }, 500);
   }
 
   return json(
