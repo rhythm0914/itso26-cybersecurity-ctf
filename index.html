@@ -113,11 +113,11 @@
   <section class="section" id="registration" aria-labelledby="registration-title">
     <div class="section__head">
       <h2 id="registration-title">Team lobby — matchmaking</h2>
-      <span class="muted small">Each player enters their own name. Start when all three are ready.</span>
+      <span class="muted small">No signup required. Create a team and share the join code, or join a team with a code.</span>
     </div>
     <div class="grid-2">
       <form class="panel lobby__join" id="registration-form" novalidate>
-        <h3>Join the lobby</h3>
+        <h3>Create a team</h3>
         <div class="field">
           <label for="team-name">Team name</label>
           <input type="text" id="team-name" name="teamName" required placeholder="e.g. Null Pointers">
@@ -131,12 +131,30 @@
           <input type="text" id="player-name" name="playerName" required placeholder="Your full name">
         </div>
         <p class="hint-text">
-          Stored in this browser only. Each teammate joins on their own device with the same team name.
+          Stored in a Cloudflare D1 database (not just your browser). Each teammate joins on their own device with the same team name or join code.
           Export your progress on the scoreboard page to keep a backup.
         </p>
         <div class="button-row">
           <button class="btn btn--primary btn--block" type="submit">Create lobby</button>
-          <button class="btn btn--ghost btn--block" type="button" id="reset-button" hidden>Reset everything</button>
+          <button class="btn btn--ghost btn--block" type="button" id="reset-button" hidden>Leave team</button>
+        </div>
+      </form>
+
+      <form class="panel lobby__join" id="join-form" novalidate>
+        <h3>Join a team</h3>
+        <div class="field">
+          <label for="join-code">Join code</label>
+          <input type="text" id="join-code" name="joinCode" required placeholder="Paste the team's join code">
+        </div>
+        <div class="field">
+          <label for="join-player-name">Your name</label>
+          <input type="text" id="join-player-name" name="joinPlayerName" required placeholder="Your full name">
+        </div>
+        <p class="hint-text">
+          Ask a teammate for their join code (shown after they create the team). You'll take the next open slot.
+        </p>
+        <div class="button-row">
+          <button class="btn btn--primary btn--block" type="submit">Join team</button>
         </div>
       </form>
 
@@ -144,6 +162,7 @@
         <div class="lobby__team">
           <span class="badge badge--solved" id="lobby-team-name">-</span>
           <span class="badge" id="lobby-school">-</span>
+          <span class="badge badge--points" id="lobby-join-code" style="margin-left:auto">code: -</span>
         </div>
         <div class="player-grid" id="player-grid"></div>
         <div class="lobby-status" id="lobby-status" role="status" aria-live="polite"></div>

@@ -1,0 +1,11 @@
+{
+  "name": "itso26-cybersecurity-ctf",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler pages deploy ."
+  },
+  "devDependencies": {
+    "wrangler": "^3.x"
+  }
+}

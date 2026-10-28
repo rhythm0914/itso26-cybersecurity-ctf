@@ -1,9 +1,17 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "itso26-cybersecurity-ctf",
-	"compatibility_date": "2026-10-20",
+	"compatibility_date": "2026-10-28",
 	"assets": {
 		"directory": "./",
 		"html_handling": "auto-trailing-slash"
-	}
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "itso26-ctf",
+			"database_id": "61dc7378-a98c-468f-b540-a51ab9e1bbbd",
+			"migrations_dir": "migrations"
+		}
+	]
 }

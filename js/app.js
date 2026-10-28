@@ -10,6 +10,7 @@
 
   var CFG = window.CTF_CONFIG || {};
   var ALL = window.CTF_CHALLENGES || [];
+  var API = CFG.apiBase || "";
   var KEY = CFG.storageKey || "itso26.cybersecurity.state.v1";
   var state = null;
   var timerHandle = null;
@@ -43,6 +44,28 @@
       node = node.parentNode;
     }
     return null;
+  }
+
+  function apiPath(path) { return API + path; }
+
+  function apiFetch(path, opts) {
+    var options = opts || {};
+    options.headers = options.headers || {};
+    if (options.body && typeof options.body !== "string") {
+      options.body = JSON.stringify(options.body);
+      options.headers["Content-Type"] = "application/json";
+    }
+    return window.fetch(apiPath(path), options).then(function (response) {
+      if (!response.ok) {
+        return response.text().then(function (text) {
+          var err = new Error("HTTP " + response.status + (text ? ": " + text : ""));
+          err.status = response.status;
+          throw err;
+        });
+      }
+      if (response.status === 204) return null;
+      return response.json();
+    });
   }
 
   function formatClock(ms) {
@@ -85,10 +108,10 @@
 
   function blankState() {
     return {
-      version: CFG.storageVersion || 1,
       team: null,
-      startedAt: null,
-      endAt: null,
+      member: null,
+      members: [],
+      joinCode: null,
       solved: {},
       hints: {},
       attempts: {},
@@ -97,36 +120,68 @@
     };
   }
 
-  function loadState() {
-    var base = blankState();
-    try {
-      var raw = window.localStorage.getItem(KEY);
-      if (raw) {
-        var parsed = JSON.parse(raw);
-        if (parsed && typeof parsed === "object") {
-          Object.keys(base).forEach(function (key) {
-            if (parsed[key] !== undefined && parsed[key] !== null) base[key] = parsed[key];
-          });
-        }
+  function loadTeam() {
+    return apiFetch("/api/me").then(function (data) {
+      if (!data || !data.ok) {
+        state = blankState();
+        return state;
       }
-    } catch (e) {
-      /* storage disabled or corrupted - keep the in-memory state */
-    }
-    state = base;
-    return state;
+      state = blankState();
+      var team = data.team || null;
+      var member = data.member || null;
+      var members = data.members || [];
+
+      // shape team for the lobby helpers (members/ready/mySlot indexed by slot)
+      var teamMembers = ["", "", ""];
+      var ready = [false, false, false];
+      var mySlot = null;
+      members.forEach(function (m) {
+        teamMembers[m.slot] = m.name || "";
+        ready[m.slot] = !!m.ready;
+        if (member && m.id === member.id) mySlot = m.slot;
+      });
+
+      state.team = {
+        id: team ? team.id : null,
+        name: team ? team.name : null,
+        school: team ? (team.school || "") : "",
+        created_at: team ? team.created_at : null,
+        started_at: team ? team.started_at : null,
+        ended_at: team ? team.ended_at : null,
+        members: teamMembers,
+        ready: ready,
+        mySlot: mySlot
+      };
+      state.member = member || null;
+      state.members = members;
+      state.solved = data.solved || {};
+      state.hints = {};
+      state.attempts = {};
+      state.locked = [];
+      state.lastSolveAt = null;
+
+      Object.keys(state.solved).forEach(function (id) {
+        var rec = state.solved[id];
+        state.hints[id] = rec.hints || [];
+        state.attempts[id] = rec.attempts || 0;
+        if (rec.at && (!state.lastSolveAt || rec.at > state.lastSolveAt)) {
+          state.lastSolveAt = rec.at;
+        }
+      });
+      return state;
+    }).catch(function () {
+      state = blankState();
+      return state;
+    });
   }
 
   function saveState() {
-    try {
-      window.localStorage.setItem(KEY, JSON.stringify(state));
-    } catch (e) {
-      flash("Progress could not be saved: browser storage is unavailable.", "error");
-    }
+    /* persisted server-side via /api/solutions and team APIs; nothing local */
   }
 
   function resetEverything() {
-    try { window.localStorage.removeItem(KEY); } catch (e) { /* ignore */ }
-    state = blankState();
+    /* handled by leaveTeam via API */
+    return leaveTeam();
   }
 
   /* ================================================================== */
@@ -200,13 +255,17 @@
   /* competition clock                                                  */
   /* ================================================================== */
 
-  function started() { return !!state.startedAt && !!state.endAt; }
+  function started() {
+    return state.team && !!state.team.started_at && !!state.team.ended_at;
+  }
 
-  function over() { return started() && Date.now() >= state.endAt; }
+  function over() {
+    return started() && Date.now() >= state.team.ended_at;
+  }
 
   function msLeft() {
     if (!started()) return (CFG.durationMinutes || 90) * 60000;
-    return Math.max(0, state.endAt - Date.now());
+    return Math.max(0, state.team.ended_at - Date.now());
   }
 
   function renderTimer() {
@@ -251,25 +310,42 @@
     }, 1000);
   }
 
+  function controlClock(action) {
+    if (!state.team || !state.team.id) return Promise.reject(new Error("no team"));
+    return apiFetch("/api/control", {
+      method: "POST",
+      body: { teamId: state.team.id, action: action }
+    }).then(function (data) {
+      if (state.team) {
+        if (action === "start" || action === "restart") {
+          state.team.started_at = data.startedAt;
+          state.team.ended_at = data.endedAt;
+        } else if (action === "end") {
+          state.team.ended_at = data.endedAt;
+        }
+      }
+      renderPage();
+      return data;
+    });
+  }
+
   function startCompetition() {
-    var nowTs = Date.now();
-    state.startedAt = nowTs;
-    state.endAt = nowTs + (CFG.durationMinutes || 90) * 60000;
-    saveState();
-    renderPage();
-    flash("Competition started - good luck, team!", "ok");
+    controlClock("start").then(function () {
+      flash("Competition started - good luck, team!", "ok");
+    }).catch(function (e) {
+      flash(e.message || "Could not start competition.", "error");
+    });
   }
 
   function restartCompetition() {
     if (!window.confirm("Restart the competition clock? Your solved challenges and points are kept.")) {
       return;
     }
-    var nowTs = Date.now();
-    state.startedAt = nowTs;
-    state.endAt = nowTs + (CFG.durationMinutes || 90) * 60000;
-    saveState();
-    renderPage();
-    flash("Competition restarted - the clock runs again from 90 minutes.", "ok");
+    controlClock("restart").then(function () {
+      flash("Competition restarted - the clock runs again from 90 minutes.", "ok");
+    }).catch(function (e) {
+      flash(e.message || "Could not restart competition.", "error");
+    });
   }
 
   /* ================================================================== */
@@ -314,17 +390,51 @@
 
   function joinLobby(teamName, school, playerName) {
     if (!teamName || !playerName) return false;
-    state.team = {
-      name: teamName,
-      school: school || "",
-      members: [playerName, "", ""],
-      ready: [false, false, false],
-      mySlot: 0
-    };
-    saveState();
-    renderPage();
-    flash("Lobby created - you joined as player 1.", "ok");
-    return true;
+    return apiFetch("/api/teams/create", {
+      method: "POST",
+      body: { name: teamName, school: school || "" }
+    }).then(function (data) {
+      state.joinCode = data.joinCode;
+      return loadTeam().then(function () {
+        renderPage();
+        flash("Lobby created - you joined as player 1. Share the join code: " + data.joinCode, "ok");
+        return true;
+      });
+    }).catch(function (e) {
+      flash(e.message || "Could not create lobby.", "error");
+      return false;
+    });
+  }
+
+  function leaveTeam() {
+    if (!state.team || !state.team.id) return Promise.resolve();
+    if (!window.confirm("Leave your team? Your membership will be removed.")) return Promise.resolve();
+    return apiFetch("/api/teams/leave", {
+      method: "POST",
+      body: { teamId: state.team.id }
+    }).then(function () {
+      return loadTeam().then(function () {
+        renderPage();
+        flash("You left the team.", "ok");
+      });
+    }).catch(function (e) {
+      flash(e.message || "Could not leave team.", "error");
+    });
+  }
+
+  function joinTeam(code, name) {
+    if (!code || !name) return Promise.reject(new Error("join code and your name are required"));
+    return apiFetch("/api/teams/join", {
+      method: "POST",
+      body: { code: code, name: name }
+    }).then(function (data) {
+      return loadTeam().then(function () {
+        renderPage();
+        flash("Joined team " + esc(data.team.name) + " as player " + (data.member.slot + 1) + ".", "ok");
+      });
+    }).catch(function (e) {
+      flash(e.message || "Could not join team - check the code.", "error");
+    });
   }
 
   function setMyName(name) {
@@ -393,10 +503,11 @@
     if (!window.confirm("End the competition early? The board becomes read only and every submission is blocked.")) {
       return;
     }
-    state.endAt = Date.now();
-    saveState();
-    renderPage();
-    flash("Competition ended early - the board is now read only.", "error");
+    controlClock("end").then(function () {
+      flash("Competition ended early - the board is now read only.", "error");
+    }).catch(function (e) {
+      flash(e.message || "Could not end competition.", "error");
+    });
   }
 
   /* ================================================================== */
@@ -496,7 +607,9 @@
 
   function renderHome() {
     var form = byId("registration-form");
+    var joinForm = byId("join-form");
     var teamCard = byId("team-card");
+    var joinCodeEl = byId("lobby-join-code");
     var startButton = byId("start-button");
     var endButton = byId("end-button");
     var playerGrid = byId("player-grid");
@@ -512,6 +625,10 @@
       }
     }
 
+    if (joinForm) {
+      joinForm.hidden = !!state.team;
+    }
+
     if (teamCard) {
       if (state.team) {
         teamCard.hidden = false;
@@ -519,6 +636,7 @@
         var schoolEl = byId("lobby-school");
         if (teamNameEl) teamNameEl.textContent = state.team.name;
         if (schoolEl) schoolEl.textContent = state.team.school || "-";
+        if (joinCodeEl) joinCodeEl.textContent = "code: " + (state.joinCode || "-");
 
         var mySlot = mySlotIndex();
         var players = lobbyPlayers();
@@ -1035,13 +1153,15 @@
       if (submit) submit.disabled = false;
       if (correct) {
         var award = awardFor(ch);
+        var solvedAt = Date.now();
         state.solved[ch.id] = {
-          at: Date.now(),
+          at: solvedAt,
           points: award,
           hints: hintsFor(ch).slice()
         };
-        state.lastSolveAt = Date.now();
+        state.lastSolveAt = solvedAt;
         saveState();
+        persistSolution(ch.id, award, hintsFor(ch).slice(), attemptsUsed(ch));
         setFeedback("Correct! +" + award + " points added to your score.", "ok");
         var card = qs('[data-challenge="' + ch.id + '"]');
         if (card) {
@@ -1074,6 +1194,21 @@
     });
   }
 
+  function persistSolution(challengeId, points, hints, attempts) {
+    if (!state.team || !state.team.id) return;
+    apiFetch("/api/solutions", {
+      method: "POST",
+      body: {
+        challengeId: challengeId,
+        points: points,
+        hintsUsed: hints,
+        attemptsUsed: attempts
+      }
+    }).catch(function () {
+      /* silent; solution already reflected in session state */
+    });
+  }
+
   function unlockHint() {
     if (!pendingHint) return;
     var modal = byId("challenge-modal");
@@ -1098,24 +1233,12 @@
   /* scoreboard                                                         */
   /* ================================================================== */
 
-  function loadRivals() {
-    var fallback = window.CTF_RIVAL_TEAMS || [];
-    var url = CFG.rivalScoreboardUrl;
-    if (!url || typeof window.fetch !== "function") return Promise.resolve(fallback);
-    return window.fetch(url, { cache: "no-store" })
-      .then(function (response) {
-        if (!response.ok) throw new Error("status " + response.status);
-        return response.json();
-      })
-      .then(function (data) {
-        var teams = (data && data.teams) ? data.teams : data;
-        if (!teams || !teams.length) throw new Error("empty scoreboard");
-        return teams;
-      })
-      .catch(function () {
-        /* file:// blocks fetch(), or the file is missing - use the JS copy */
-        return fallback;
-      });
+  function fetchScoreboard() {
+    return apiFetch("/api/scoreboard").then(function (data) {
+      return (data && data.teams) || [];
+    }).catch(function () {
+      return [];
+    });
   }
 
   function myTeamEntry() {
@@ -1133,31 +1256,23 @@
     var tbody = byId("standings-body");
     if (!tbody) return;
 
-    loadRivals().then(function (rivals) {
-      var entries = rivals.map(function (team) {
+    fetchScoreboard().then(function (teams) {
+      var entries = teams.map(function (team) {
         return {
           name: team.name || "Team",
           school: team.school || "",
           score: Number(team.score || 0),
           solved: Number(team.solved || 0),
           lastSolve: team.lastSolve ? Date.parse(team.lastSolve) : null,
-          mine: false
+          mine: team.id === (state.team ? state.team.id : null),
+          rank: team.rank
         };
-      });
-      entries.push(myTeamEntry());
-
-      entries.sort(function (a, b) {
-        if (b.score !== a.score) return b.score - a.score;
-        var aTime = a.lastSolve || Number.MAX_SAFE_INTEGER;
-        var bTime = b.lastSolve || Number.MAX_SAFE_INTEGER;
-        if (aTime !== bTime) return aTime - bTime;
-        return a.name.localeCompare(b.name);
       });
 
       var ended = over();
       var html = "";
       entries.forEach(function (entry, index) {
-        var rank = index + 1;
+        var rank = entry.rank || index + 1;
         var medal = "";
         if (ended && rank === 1) medal = '<span class="medal medal--champion">Champion</span>';
         else if (ended && rank === 2) medal = '<span class="medal medal--first">1st Runner-up</span>';
@@ -1468,7 +1583,17 @@
     }
 
     var registration = byId("registration-form");
-    if (registration) registration.addEventListener("submit", submitRegistration);
+    if (registration)     registration.addEventListener("submit", submitRegistration);
+
+    var joinForm = byId("join-form");
+    if (joinForm) {
+      joinForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+        var code = String(joinForm.elements.joinCode.value || "").trim();
+        var name = String(joinForm.elements.joinPlayerName.value || "").trim();
+        joinTeam(code, name);
+      });
+    }
 
     var startButton = byId("start-button");
     if (startButton) {
@@ -1487,12 +1612,8 @@
     var resetButton = byId("reset-button");
     if (resetButton) {
       resetButton.addEventListener("click", function () {
-        if (window.confirm("Reset everything? Team, timer, hints and all solved challenges will be deleted from this browser.")) {
-          resetEverything();
-          renderPage();
-          flash("Everything has been reset.", "ok");
-        }
-      });
+      leaveTeam();
+    });
     }
 
     var exportButton = byId("export-button");
@@ -1510,10 +1631,11 @@
   }
 
   function init() {
-    loadState();
-    bindGlobalEvents();
-    renderPage();
-    startTimer();
+    loadTeam().then(function () {
+      bindGlobalEvents();
+      renderPage();
+      startTimer();
+    });
   }
 
   if (document.readyState === "loading") {

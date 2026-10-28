@@ -39,6 +39,10 @@ window.CTF_CONFIG = {
   rivalScoreboardUrl: "data/scoreboard.json",
   rivalScoreboardScript: "data/scoreboard.js",
 
+  /* ---------------- API (D1 via Pages Functions) ---------------- */
+  apiBase: "",              // same origin by default; set to your Pages URL in production
+  apiTimeoutMs: 10000,
+
   /* ---------------- presentation ---------------- */
   categories: [
     { name: "Essential Security Principles", short: "Essential" },

@@ -11,3 +11,7 @@ desktop.ini
 .vscode/
 .idea/
 *.swp
+
+# Wrangler local state
+.wrangler/
+wrangler-dev.log
