@@ -2,10 +2,6 @@
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "itso26-cybersecurity-ctf",
 	"compatibility_date": "2026-10-28",
-	"assets": {
-		"directory": "./",
-		"html_handling": "auto-trailing-slash"
-	},
 	"pages_build_output_dir": "./",
 	"d1_databases": [
 		{
