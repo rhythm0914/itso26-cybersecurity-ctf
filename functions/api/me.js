@@ -4,14 +4,14 @@
  * No signup: identity is the cookie set at create/join time.
  */
 export const onRequestGet = async (context) => {
-  const { DB, request } = context;
+  const { env, request } = context;
 
   const memberId = getMemberCookie(request);
   if (!memberId) return json({ ok: false, team: null, member: null }, 200);
 
   let member;
   try {
-    member = await DB.prepare(
+    member = await env.DB.prepare(
       "SELECT id, team_id, slot_index, name, is_ready, joined_at FROM team_members WHERE id = ?"
     ).bind(memberId).first();
   } catch (e) {
@@ -27,7 +27,7 @@ export const onRequestGet = async (context) => {
 
   let team;
   try {
-    team = await DB.prepare("SELECT * FROM teams WHERE id = ?").bind(member.team_id).first();
+    team = await env.DB.prepare("SELECT * FROM teams WHERE id = ?").bind(member.team_id).first();
   } catch (e) {
     return json({ error: "database error" }, 500);
   }
@@ -41,7 +41,7 @@ export const onRequestGet = async (context) => {
 
   let members;
   try {
-    members = await DB.prepare(
+    members = await env.DB.prepare(
       "SELECT id, slot_index, name, is_ready, joined_at FROM team_members WHERE team_id = ? ORDER BY slot_index"
     ).bind(team.id).all();
   } catch (e) {
@@ -50,7 +50,7 @@ export const onRequestGet = async (context) => {
 
   let solutions;
   try {
-    solutions = await DB.prepare(
+    solutions = await env.DB.prepare(
       "SELECT challenge_id, points, solved_at, hints_used, attempts_used FROM team_solutions WHERE team_id = ?"
     ).bind(team.id).all();
   } catch (e) {

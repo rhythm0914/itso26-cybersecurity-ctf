@@ -32,7 +32,7 @@ export const onRequest = async (context, next) => {
   }
 
   // D1 binding must be configured in Pages dashboard (Settings -> Functions -> D1 databases)
-  if (!context.DB) {
+  if (!context.env || !context.env.DB) {
     return json({
       error: "database not configured",
       message: "Bind the D1 database 'itso26-cybersecurity-ctf' (binding: DB) in the Pages project settings.",

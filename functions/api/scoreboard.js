@@ -3,11 +3,11 @@
  * Returns leaderboard: all teams ranked by total score, ties by earliest last solve.
  */
 export const onRequestGet = async (context) => {
-  const { DB } = context;
+  const { env } = context;
 
   let teams;
   try {
-    teams = await DB.prepare("SELECT * FROM teams ORDER BY created_at ASC").all();
+    teams = await env.DB.prepare("SELECT * FROM teams ORDER BY created_at ASC").all();
   } catch (e) {
     return json({ error: "database error" }, 500);
   }
@@ -18,7 +18,7 @@ export const onRequestGet = async (context) => {
     rows.map(async (t) => {
       let solutions;
       try {
-        solutions = await DB.prepare(
+        solutions = await env.DB.prepare(
           "SELECT points, solved_at FROM team_solutions WHERE team_id = ?"
         ).bind(t.id).all();
       } catch (e) {

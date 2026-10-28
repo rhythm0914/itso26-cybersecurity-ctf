@@ -3,12 +3,12 @@
  * Returns team + members. Uses ctf_member cookie to scope visibility.
  */
 export const onRequestGet = async (context) => {
-  const { DB, request } = context;
+  const { env, request } = context;
   const { teamId } = context.params;
 
   let team;
   try {
-    team = await DB.prepare("SELECT * FROM teams WHERE id = ?").bind(teamId).first();
+    team = await env.DB.prepare("SELECT * FROM teams WHERE id = ?").bind(teamId).first();
   } catch (e) {
     return json({ error: "database error" }, 500);
   }
@@ -17,7 +17,7 @@ export const onRequestGet = async (context) => {
 
   let members;
   try {
-    members = await DB.prepare(
+    members = await env.DB.prepare(
       "SELECT id, slot_index, name, is_ready, joined_at FROM team_members WHERE team_id = ? ORDER BY slot_index"
     ).bind(teamId).all();
   } catch (e) {

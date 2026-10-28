@@ -4,7 +4,7 @@
  * Only the team creator (slot 0) can control the clock. Identified by ctf_member cookie.
  */
 export const onRequestPost = async (context) => {
-  const { DB, request } = context;
+  const { env, request } = context;
   const body = request.body || {};
   const teamId = String(body.teamId || "").trim();
   const action = String(body.action || "").trim();
@@ -17,7 +17,7 @@ export const onRequestPost = async (context) => {
 
   let member;
   try {
-    member = await DB.prepare(
+    member = await env.DB.prepare(
       "SELECT slot_index FROM team_members WHERE id = ? AND team_id = ?"
     ).bind(memberId, teamId).first();
   } catch (e) {
@@ -39,7 +39,7 @@ export const onRequestPost = async (context) => {
   }
 
   try {
-    await DB.prepare(
+    await env.DB.prepare(
       "UPDATE teams SET started_at = COALESCE(?, started_at), ended_at = ? WHERE id = ?"
     ).bind(startedAt, endedAt, teamId).run();
   } catch (e) {

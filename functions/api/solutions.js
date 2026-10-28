@@ -7,7 +7,7 @@
  * persists the result once the client reports a correct solve.
  */
 export const onRequestPost = async (context) => {
-  const { DB, request } = context;
+  const { env, request } = context;
   const body = request.body || {};
   const challengeId = String(body.challengeId || "").trim();
   const points = Number(body.points || 0);
@@ -21,7 +21,7 @@ export const onRequestPost = async (context) => {
 
   let member;
   try {
-    member = await DB.prepare(
+    member = await env.DB.prepare(
       "SELECT team_id FROM team_members WHERE id = ?"
     ).bind(memberId).first();
   } catch (e) {
@@ -34,7 +34,7 @@ export const onRequestPost = async (context) => {
   const now = Date.now();
 
   try {
-    await DB.prepare(
+    await env.DB.prepare(
       `INSERT INTO team_solutions (team_id, challenge_id, solved_at, points, hints_used, attempts_used)
        VALUES (?, ?, ?, ?, ?, ?)
        ON CONFLICT(team_id, challenge_id) DO UPDATE SET

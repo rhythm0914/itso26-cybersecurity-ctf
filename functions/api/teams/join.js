@@ -5,7 +5,7 @@
  * Sets ctf_member cookie identifying the new member row.
  */
 export const onRequestPost = async (context) => {
-  const { DB, request } = context;
+  const { env, request } = context;
   const body = request.body || {};
   const code = String(body.code || "").trim();
   const name = String(body.name || "").trim();
@@ -18,7 +18,7 @@ export const onRequestPost = async (context) => {
 
   let row;
   try {
-    row = await DB.prepare(
+    row = await env.DB.prepare(
       "SELECT * FROM join_codes WHERE code = ? AND uses_left > 0 AND expires_at > ?"
     ).bind(code, now).first();
   } catch (e) {
@@ -32,7 +32,7 @@ export const onRequestPost = async (context) => {
   // Find next free slot (1 or 2; slot 0 is the creator)
   let members;
   try {
-    members = await DB.prepare(
+    members = await env.DB.prepare(
       "SELECT slot_index FROM team_members WHERE team_id = ? ORDER BY slot_index"
     ).bind(teamId).all();
   } catch (e) {
@@ -48,22 +48,22 @@ export const onRequestPost = async (context) => {
 
   const memberId = crypto.randomUUID();
   try {
-    await DB.prepare(
+    await env.DB.prepare(
       "INSERT INTO team_members (team_id, slot_index, name, joined_at) VALUES (?, ?, ?, ?)"
     ).bind(teamId, slot, name, now).run();
 
-    await DB.prepare(
+    await env.DB.prepare(
       "UPDATE join_codes SET uses_left = uses_left - 1 WHERE code = ?"
     ).bind(code).run();
 
-    const team = await DB.prepare(
+    const team = await env.DB.prepare(
       "SELECT * FROM teams WHERE id = ?"
     ).bind(teamId).first();
   } catch (e) {
     return json({ error: "could not join team" }, 500);
   }
 
-  const team = await DB.prepare("SELECT * FROM teams WHERE id = ?").bind(teamId).first();
+  const team = await env.DB.prepare("SELECT * FROM teams WHERE id = ?").bind(teamId).first();
 
   return json(
     {
