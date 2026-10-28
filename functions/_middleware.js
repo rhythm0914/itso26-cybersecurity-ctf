@@ -39,19 +39,7 @@ export const onRequest = async (context, next) => {
     }, 503);
   }
 
-  const res = await next().catch((err) => {
-    return json({
-      error: "route handler threw",
-      message: err.message,
-      stack: err.stack
-    }, 500);
-  });
-
-  // Add CORS headers to every response
-  const headers = new Headers(res.headers);
-  headers.set("Access-Control-Allow-Origin", "*");
-  headers.set("Access-Control-Allow-Headers", "Content-Type");
-  return new Response(res.body, { status: res.status, statusText: res.statusText, headers });
+  return json({ ok: true, env: Object.keys(context.env || {}), hasDB: !!context.env.DB }, 200);
 };
 
 const json = (body, status = 200) =>
