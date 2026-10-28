@@ -40,8 +40,8 @@ export const onRequestPost = async (context) => {
     ).bind(teamId, teamName, school, now).run();
 
     await env.DB.prepare(
-      "INSERT INTO team_members (team_id, slot_index, name, joined_at) VALUES (?, 0, ?, ?)"
-    ).bind(teamId, memberId, teamName, now).run();
+      "INSERT INTO team_members (team_id, slot_index, name, joined_at) VALUES (?, ?, ?, ?)"
+    ).bind(teamId, 0, teamName, now).run();
 
     const expiresAt = now + 7 * 24 * 60 * 60 * 1000; // 7 days
     await env.DB.prepare(
