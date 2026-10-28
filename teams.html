@@ -37,7 +37,6 @@
     </div>
     <div class="filters" role="group" aria-label="Team filters">
       <input type="search" id="team-search" placeholder="Search team name…" aria-label="Search teams">
-      <label style="margin:0 0 0 0.5rem"><input type="checkbox" id="filter-recruiting"> Recruiting only</label>
       <div style="margin-left:auto">
         <span class="pill" id="team-count">0 teams</span>
       </div>
@@ -172,7 +171,6 @@
   };
 
   document.getElementById("team-search").addEventListener("input", renderTeams);
-  document.getElementById("filter-recruiting").addEventListener("change", renderTeams);
   document.getElementById("logout-btn").addEventListener("click", function () {
     window.Auth.logout().then(function () { location.href = "login.html"; });
   });

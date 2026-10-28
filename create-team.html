@@ -48,12 +48,7 @@
           <label for="description">Description (optional)</label>
           <textarea id="description" name="description" rows="3" placeholder="What is your team about?"></textarea>
         </div>
-        <div class="field">
-          <label style="display:flex;align-items:center;gap:0.5rem;font-weight:500">
-            <input type="checkbox" id="recruiting" name="recruiting" checked>
-            Team is recruiting (appears in team search)
-          </label>
-        </div>
+        
         <div class="button-row">
           <button type="submit" class="btn btn--primary btn--block" id="create-btn">Create team</button>
         </div>
@@ -92,7 +87,7 @@
       school: String(form.elements.school.value || "").trim(),
       motto: String(form.elements.motto.value || "").trim(),
       description: String(form.elements.description.value || "").trim(),
-      recruitment: form.elements.recruiting.checked
+      
     };
     if (!fields.name) { flash("Team name is required.", "error"); return; }
     btn.disabled = true; btn.textContent = "Creating team…";

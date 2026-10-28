@@ -38,8 +38,6 @@ export const onRequestPost = async (context) => {
     const slug = cleanString(body.slug || slugify(teamName));
     const motto = cleanString(body.motto || "");
     const description = cleanString(body.description || "");
-    const recruitment = body.recruitment !== false ? 1 : 0;
-
     if (!teamName || teamName.length > 60) return errorResponse("team name required (max 60 chars)", 400);
     if (school.length > 100) return errorResponse("school too long", 400);
 
@@ -59,7 +57,7 @@ export const onRequestPost = async (context) => {
         ).bind(teamId, teamName, school, String(now)).run();
         await env.DB.prepare(
           "UPDATE teams SET slug = ?, motto = ?, description = ?, recruitment = ?, max_size = 3, captain_user_id = ?, status = 'open', updated_at = ? WHERE id = ?"
-        ).bind(slug, motto, description, String(recruitment), session.userId, String(now), teamId).run();
+        ).bind(slug, motto, description, session.userId, String(now), teamId).run();
         await env.DB.prepare(
           "INSERT INTO team_members (id, team_id, slot_index, name, user_id, is_captain, joined_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
         ).bind(memberIdNew, teamId, "0", teamName, session.userId, "1", String(now)).run();
@@ -73,8 +71,8 @@ export const onRequestPost = async (context) => {
           "INSERT INTO teams (id, name, school, created_at) VALUES (?, ?, ?, ?)"
         ).bind(teamId, teamName, school, String(now)).run();
         await env.DB.prepare(
-          "UPDATE teams SET slug = ?, motto = ?, description = ?, recruitment = ?, max_size = 3, captain_user_id = NULL, status = 'open', updated_at = ? WHERE id = ?"
-        ).bind(slug, motto, description, String(recruitment), String(now), teamId).run();
+          "UPDATE teams SET slug = ?, motto = ?, description = ?, max_size = 3, captain_user_id = NULL, status = 'open', updated_at = ? WHERE id = ?"
+        ).bind(slug, motto, description, String(now), teamId).run();
         await env.DB.prepare(
           "INSERT INTO team_members (id, team_id, slot_index, name, is_captain, joined_at) VALUES (?, ?, ?, ?, ?, ?)"
         ).bind(memberIdNew, teamId, "0", teamName, "1", String(now)).run();
@@ -90,7 +88,7 @@ export const onRequestPost = async (context) => {
     } catch (e) { return errorResponse("could not issue join code", 500); }
 
     const cookie = `ctf_member=${memberIdNew}; Path=/; Max-Age=604800; SameSite=Lax`;
-    return localJson({ ok: true, team: { id: teamId, name: teamName, school, slug, motto, description, recruitment: !!recruitment, created_at: now }, member: { id: memberIdNew, slot: 0, name: teamName }, joinCode }, 200, { "Set-Cookie": cookie });
+    return localJson({ ok: true, team: { id: teamId, name: teamName, school, slug, motto, description, created_at: now }, member: { id: memberIdNew, slot: 0, name: teamName }, joinCode }, 200, { "Set-Cookie": cookie });
   } catch (e) {
     return localJson({ error: "worker exception", message: String(e.message || e), stack: String(e.stack || "").split("\n").slice(0, 5) }, 500);
   }
