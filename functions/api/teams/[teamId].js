@@ -52,17 +52,23 @@ export const onRequestPatch = async (context) => {
   const { env, request } = context;
   const { teamId } = context.params;
 
-  const memberId = getMemberCookie(request);
-  if (!memberId) return json({ error: "not identified" }, 401);
+  // Prefer authenticated session user, fall back to ctf_member cookie
+  let caller = null;
+  const { getSession } = await import("../../_lib.js");
+  const session = await getSession(env, request);
+  if (session) {
+    caller = await env.DB.prepare("SELECT id, slot_index FROM team_members WHERE user_id = ? AND team_id = ?").bind(session.userId, teamId).first();
+  } else {
+    const memberId = getMemberCookie(request);
+    if (!memberId) return json({ error: "not identified" }, 401);
+    caller = await env.DB.prepare("SELECT id, slot_index FROM team_members WHERE id = ? AND team_id = ?").bind(memberId, teamId).first();
+  }
+  if (!caller) return json({ error: "you are not a member of this team" }, 404);
 
   let body = {};
   const ct = request.headers.get("content-type") || "";
   if (ct.includes("application/json")) {
-    try {
-      body = JSON.parse(await request.text());
-    } catch (e) {
-      return json({ error: "invalid json body" }, 400);
-    }
+    try { body = JSON.parse(await request.text()); } catch { return json({ error: "invalid json body" }, 400); }
   }
 
   const slot = Number(body.slot);
@@ -72,22 +78,9 @@ export const onRequestPatch = async (context) => {
   if (slot === undefined || slot === null || slot < 0 || slot > 2) {
     return json({ error: "slot must be 0, 1 or 2" }, 400);
   }
-
   if (name === null && ready === null) {
     return json({ error: "nothing to update" }, 400);
   }
-
-  // Identify caller's membership in this team
-  let caller;
-  try {
-    caller = await env.DB.prepare(
-      "SELECT id, slot_index FROM team_members WHERE id = ? AND team_id = ?"
-    ).bind(memberId, teamId).first();
-  } catch (e) {
-    return json({ error: "database error" }, 500);
-  }
-
-  if (!caller) return json({ error: "you are not a member of this team" }, 404);
 
   const isCreator = caller.slot_index === 0;
   const isOwnRow = caller.id === await getMemberRowId(env, teamId, slot);
@@ -106,7 +99,7 @@ export const onRequestPatch = async (context) => {
   }
   if (ready !== null) {
     sets.push("is_ready = ?");
-    params.push(ready ? 1 : 0);
+    params.push(String(ready ? 1 : 0));
   }
   params.push(slot);
 

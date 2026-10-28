@@ -42,6 +42,7 @@ export const onRequestPost = async (context) => {
 
   const teamId = member.team_id;
   const now = Date.now();
+  const nowStr = String(now);
 
   try {
     await env.DB.prepare(
@@ -52,7 +53,7 @@ export const onRequestPost = async (context) => {
          points = excluded.points,
          hints_used = excluded.hints_used,
          attempts_used = excluded.attempts_used`
-    ).bind(teamId, challengeId, now, points, JSON.stringify(hintsUsed), attemptsUsed).run();
+    ).bind(teamId, challengeId, nowStr, String(points), JSON.stringify(hintsUsed), String(attemptsUsed)).run();
   } catch (e) {
     return json({ error: "could not save solution" }, 500);
   }

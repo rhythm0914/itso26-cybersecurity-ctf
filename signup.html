@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Create account &middot; IT Skills Olympics 2026</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="auth">
+
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<header class="topbar">
+  <div class="wrap topbar__inner">
+    <a class="brand" href="index.html">
+      <span class="brand__mark" aria-hidden="true">&gt;_</span>
+      <span class="brand__text"><strong>IT Skills Olympics 2026</strong><span>Cybersecurity Category</span></span>
+    </a>
+    <a href="index.html" class="btn btn--ghost" style="margin-left:auto">Back to home</a>
+  </div>
+</header>
+
+<main id="main" class="wrap page">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <h2>Create your account</h2>
+      <form id="signup-form" novalidate>
+        <div class="field">
+          <label for="username">Username</label>
+          <input type="text" id="username" name="username" required maxlength="32" placeholder="lowercase, numbers, _ -" pattern="[a-z0-9_-]{3,32}">
+        </div>
+        <div class="field">
+          <label for="email">Email address</label>
+          <input type="email" id="email" name="email" required placeholder="you@example.com">
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" required minlength="8" placeholder="at least 8 characters">
+        </div>
+        <div class="field">
+          <label for="confirm">Confirm password</label>
+          <input type="password" id="confirm" name="confirm" required placeholder="repeat your password">
+        </div>
+        <div class="field" style="display:flex;align-items:flex-start;gap:0.5rem;padding-top:0.2rem">
+          <input type="checkbox" id="accept_rules" name="accept_rules" required>
+          <label for="accept_rules" style="margin:0;font-weight:500;font-size:0.9rem">
+            I accept the <a href="#">event rules</a> and privacy notice.
+          </label>
+        </div>
+        <div class="button-row">
+          <button type="submit" class="btn btn--primary btn--block" id="signup-btn">Create account</button>
+        </div>
+        <p class="muted small" style="text-align:center;margin-top:1rem">
+          Already have an account? <a href="login.html">Sign in</a>.
+        </p>
+      </form>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="wrap footer__inner">
+    <span>IT Skills Olympics 2026 &middot; Cybersecurity Category</span>
+  </div>
+</footer>
+
+<div class="page-status" id="page-status" role="status" aria-live="polite" data-visible="false"></div>
+
+<script src="js/auth.js"></script>
+<script>
+(function () {
+  "use strict";
+  var form = document.getElementById("signup-form");
+  var btn = document.getElementById("signup-btn");
+  var orig = btn.textContent;
+
+  function flash(msg, tone) {
+    var box = document.getElementById("page-status");
+    box.textContent = msg; box.className = "page-status" + (tone ? " page-status--" + tone : "");
+    box.setAttribute("data-visible", "true");
+    setTimeout(function () { box.setAttribute("data-visible", "false"); }, 5000);
+  }
+
+  form.addEventListener("submit", function (event) {
+    event.preventDefault();
+    var fields = {
+      username: String(form.elements.username.value || "").trim(),
+      email: String(form.elements.email.value || "").trim(),
+      password: String(form.elements.password.value || ""),
+      confirm: String(form.elements.confirm.value || ""),
+      accept_rules: form.elements.accept_rules.checked
+    };
+    if (!fields.username || !fields.email || !fields.password || !fields.confirm) { flash("Please fill in all fields.", "error"); return; }
+    if (fields.password !== fields.confirm) { flash("Passwords do not match.", "error"); return; }
+    btn.disabled = true; btn.textContent = "Creating account…";
+    window.Auth.register(fields).then(function (data) {
+      btn.disabled = false; btn.textContent = orig;
+      if (data && data.ok) {
+        flash("Account created. Please verify your email before joining a team.", "ok");
+        location.replace("login.html");
+      } else {
+        flash(data && data.error ? data.error : "Registration failed.", "error");
+      }
+    }).catch(function (err) {
+      btn.disabled = false; btn.textContent = orig;
+      flash(err.status === 409 ? "An account with that username or email already exists." : "Registration failed. Try again.", "error");
+    });
+  });
+})();
+</script>
+</body>
+</html>

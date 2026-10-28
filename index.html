@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="IT Skills Olympics 2026 - Cybersecurity Category. An offline practice CTF: 19 graded challenges, hints, scoring and a simulated competition clock.">
+<meta name="description" content="IT Skills Olympics 2026 - Cybersecurity Category. A team-based CTF platform with registration, team management, chat and scoreboard.">
 <meta name="color-scheme" content="dark">
 <title>IT Skills Olympics 2026 &middot; Cybersecurity Category</title>
 <link rel="stylesheet" href="css/style.css">
@@ -21,304 +21,142 @@
         <span>Cybersecurity Category</span>
       </span>
     </a>
-    <nav class="topbar__nav" aria-label="Main navigation">
-      <a href="index.html" aria-current="page">Home</a>
-      <a href="challenges.html">Challenges</a>
-      <a href="scoreboard.html">Scoreboard</a>
-      <a href="writeups.html">Writeups</a>
-    </nav>
-    <div class="topbar__status">
-      <span class="pill">Team <b id="hdr-team">not registered</b></span>
-      <span class="pill">Score <b id="hdr-score">0</b></span>
-      <span class="pill pill--timer" data-timer>--:--</span>
-    </div>
+    <nav class="topbar__nav" id="topbar-nav" aria-label="Main navigation"></nav>
+    <div class="topbar__status" id="topbar-auth"></div>
   </div>
 </header>
 
 <main id="main" class="wrap page">
 
   <section class="hero">
-    <p class="hero__kicker">Offline practice simulation</p>
-    <h1>Cybersecurity Category</h1>
+    <p class="hero__kicker">IT Skills Olympics 2026</p>
+    <h1>Cybersecurity Category CTF</h1>
     <p class="hero__lede">
-      A complete capture-the-flag platform for the IT Skills Olympics 2026. Register your
-      team of three, start the 90 minute clock and work through 19 graded challenges
-      across the four official areas of the category - plus a trivia round and one
-      hidden tiebreaker. Everything runs in your browser: no backend, no internet, no
-      build step.
+      A team-based capture-the-flag platform. Register an account, build or join a
+      team of three, solve 19 graded challenges across four official areas, and climb
+      the scoreboard before the 90-minute clock runs out.
     </p>
-    <div class="stat-row">
-      <span class="stat"><span class="stat__value">19</span><span class="stat__label">graded challenges</span></span>
-      <span class="stat"><span class="stat__value">1500</span><span class="stat__label">points available</span></span>
-      <span class="stat"><span class="stat__value">90:00</span><span class="stat__label">minutes</span></span>
-      <span class="stat"><span class="stat__value">4</span><span class="stat__label">official areas</span></span>
-      <span class="stat"><span class="stat__value">5</span><span class="stat__label">teams of 3</span></span>
-    </div>
-    <div class="button-row">
-      <a class="btn btn--primary" href="#registration">Register your team</a>
-      <a class="btn" href="challenges.html">Challenge board</a>
-      <a class="btn btn--ghost" href="scoreboard.html">Scoreboard</a>
-      <a class="btn btn--ghost" href="writeups.html">Solutions &amp; Kali guide</a>
-    </div>
+    <div class="button-row" id="hero-cta"></div>
   </section>
 
-  <section class="section" aria-labelledby="what-is-ctf">
-    <div class="section__head">
-      <h2 id="what-is-ctf">What is a CTF?</h2>
-    </div>
+  <section class="section" aria-labelledby="features-title">
+    <div class="section__head"><h2 id="features-title">How it works</h2></div>
     <div class="grid-2">
       <div class="panel">
-        <p>
-          A <strong>Capture The Flag</strong> (CTF) is a cybersecurity exercise in which
-          small teams are given a set of practical tasks - decrypting a message, analysing
-          a packet capture, hunting for persistence on a disk image or ranking the risk of
-          a scan report.
-        </p>
-        <p>
-          Every task hides a secret string called a <strong>flag</strong>, for example
-          <code>CTF{some_text_here}</code>. You solve the task, find the flag and submit it
-          to earn points.
-        </p>
-        <p>
-          Teams compete against the clock and against each other; the team with the most
-          points when time runs out wins.
-        </p>
-        <p class="muted" style="margin-bottom:0">
-          This site is a faithful practice simulator of the Cybersecurity Category of the
-          IT Skills Olympics 2026 - it runs completely offline, stores your progress in
-          your own browser and never sends anything over the network.
-        </p>
+        <h3>1. Create an account</h3>
+        <p>Sign up with a username, email and password. Verify your email to unlock team features.</p>
       </div>
       <div class="panel">
-        <h3>Flag format</h3>
-        <p>
-          Every flag of a graded challenge looks like this:
-        </p>
-        <pre>CTF{some_text_here}</pre>
-        <p class="muted">
-          Flags are <strong>case sensitive</strong> unless the challenge says otherwise
-          (the trivia round ignores case and punctuation). For trivia you type the plain
-          answer - the <code>CTF{}</code> wrapper is optional there.
-        </p>
-        <h3>Flag checking</h3>
-        <p class="muted" style="margin-bottom:0">
-          The site never stores a flag in clear text. Only a salted SHA-256 hash of it is
-          stored, and your input is hashed in the browser and compared. The flag is
-          therefore never sent anywhere.
-        </p>
+        <h3>2. Build or join a team</h3>
+        <p>Create a team and share the invite code, or search teams and submit a join request. Captains approve or reject requests.</p>
       </div>
-    </div>
-  </section>
-
-  <section class="section" id="registration" aria-labelledby="registration-title">
-    <div class="section__head">
-      <h2 id="registration-title">Team lobby — matchmaking</h2>
-      <span class="muted small">No signup required. Create a team and share the join code, or join a team with a code.</span>
-    </div>
-    <div class="grid-2">
-      <form class="panel lobby__join" id="registration-form" novalidate>
-        <h3>Create a team</h3>
-        <div class="field">
-          <label for="team-name">Team name</label>
-          <input type="text" id="team-name" name="teamName" required placeholder="e.g. Null Pointers">
-        </div>
-        <div class="field">
-          <label for="school">School / organisation</label>
-          <input type="text" id="school" name="school" required placeholder="e.g. Northgate Technical College">
-        </div>
-        <div class="field">
-          <label for="player-name">Your name</label>
-          <input type="text" id="player-name" name="playerName" required placeholder="Your full name">
-        </div>
-        <p class="hint-text">
-          Stored in a Cloudflare D1 database (not just your browser). Each teammate joins on their own device with the same team name or join code.
-          Export your progress on the scoreboard page to keep a backup.
-        </p>
-        <div class="button-row">
-          <button class="btn btn--primary btn--block" type="submit">Create lobby</button>
-          <button class="btn btn--ghost btn--block" type="button" id="reset-button" hidden>Leave team</button>
-        </div>
-      </form>
-
-      <form class="panel lobby__join" id="join-form" novalidate>
-        <h3>Join a team</h3>
-        <div class="field">
-          <label for="join-code">Join code</label>
-          <input type="text" id="join-code" name="joinCode" required placeholder="Paste the team's join code">
-        </div>
-        <div class="field">
-          <label for="join-player-name">Your name</label>
-          <input type="text" id="join-player-name" name="joinPlayerName" required placeholder="Your full name">
-        </div>
-        <p class="hint-text">
-          Ask a teammate for their join code (shown after they create the team). You'll take the next open slot.
-        </p>
-        <div class="button-row">
-          <button class="btn btn--primary btn--block" type="submit">Join team</button>
-        </div>
-      </form>
-
-      <div class="panel lobby" id="team-card" hidden>
-        <div class="lobby__team">
-          <span class="badge badge--solved" id="lobby-team-name">-</span>
-          <span class="badge" id="lobby-school">-</span>
-          <div id="lobby-join-code-wrap" style="margin-left:auto">
-            <span class="badge badge--points" id="lobby-join-code">code: —</span>
-            <button class="btn btn--ghost btn--small" id="lobby-join-code-copy" hidden>Copy</button>
-          </div>
-        </div>
-        <div class="player-grid" id="player-grid"></div>
-        <div class="lobby-status" id="lobby-status" role="status" aria-live="polite"></div>
-        <div class="lobby__controls">
-          <div class="field my-name-field" id="lobby-creator-only">
-            <label for="my-name">Your name</label>
-            <input type="text" id="my-name" placeholder="Your name">
-          </div>
-          <div class="field my-name-field" id="lobby-member-only">
-            <label for="my-name">Your name</label>
-            <input type="text" id="my-name" placeholder="Your name" readonly>
-            <p class="hint-text small" style="margin-top:0.25rem">Only the team creator can edit names.</p>
-          </div>
-          <button class="btn btn--primary ready-toggle" type="button" id="ready-toggle" disabled>Not ready</button>
-          <div class="button-row lobby__actions">
-            <button class="btn btn--primary btn--block" type="button" id="start-button" disabled>Start Competition</button>
-            <button class="btn btn--end btn--block" type="button" id="end-button" hidden>End Competition</button>
-          </div>
-          <button class="btn btn--ghost btn--block" type="button" id="reset-button">Leave team</button>
-        </div>
-        <p class="muted" id="writeups-lock-note" style="margin-bottom:0"></p>
-      </div>
-    </div>
-  </section>
-
-  <section class="section" aria-labelledby="rules-title">
-    <div class="section__head">
-      <h2 id="rules-title">Competition rules</h2>
-    </div>
-    <div class="grid-2">
-      <ul class="rule-list panel">
-        <li>
-          <strong>Teams of exactly three members.</strong>
-          <span class="muted">Register all three names before the clock starts.</span>
-        </li>
-        <li>
-          <strong>Total time: 1 hour 30 minutes.</strong>
-          <span class="muted">The countdown starts when you press "Start Competition" and survives a refresh. When it reaches zero every submission is blocked and the board becomes read only.</span>
-        </li>
-        <li>
-          <strong>No internet - bring your own tools.</strong>
-          <span class="muted">In the real contest there is no network access. Install everything you need on Kali Linux beforehand (nmap, Wireshark/tshark, john, hashcat, hashid, binwalk, exiftool, strings, an offline CyberChef copy and the rockyou wordlist).</span>
-        </li>
-        <li>
-          <strong>Scoring by difficulty.</strong>
-          <span class="muted">Easy = 50, Average = 100, Difficult = 150, Trivia = 30. Maximum 1500 points.</span>
-        </li>
-        <li>
-          <strong>Three hints per challenge, unlocked in order.</strong>
-          <span class="muted">Every hint costs points: Easy -20, Average -60, Difficult -100. Trivia has no hints. A challenge awards max(0, points - total hint cost).</span>
-        </li>
-        <li>
-          <strong>Three attempts per challenge.</strong>
-          <span class="muted">After the third wrong submission the challenge is locked for good - the lock is stored in your browser, so a refresh does not reset it. The attempt limit replaces any cooldown and stops brute forcing of the submit form.</span>
-        </li>
-        <li>
-          <strong>Ranking.</strong>
-          <span class="muted">Highest total score wins. If two teams are level, the team whose <em>last</em> correct submission came earlier ranks higher. One hidden tiebreaker challenge exists for exactly that case - it is not counted in the total score.</span>
-        </li>
-        <li>
-          <strong>Fair play.</strong>
-          <span class="muted">Do not attack or stress the site that hosts the competition, do not share flags with other teams and do not brute force the submission form.</span>
-        </li>
-      </ul>
-
       <div class="panel">
-        <h3>How scoring works</h3>
-        <table class="points-table">
-          <caption class="muted small" style="text-align:left;padding-bottom:0.5rem">Points per challenge before hints</caption>
-          <thead>
-            <tr><th>Difficulty</th><th>Points</th><th>Cost per hint</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>Easy</td><td>50</td><td>-20</td></tr>
-            <tr><td>Average</td><td>100</td><td>-60</td></tr>
-            <tr><td>Difficult</td><td>150</td><td>-100</td></tr>
-            <tr><td>Trivia</td><td>30</td><td>no hints</td></tr>
-          </tbody>
-        </table>
-        <p class="muted" style="margin-top:1rem">
-          Example: a Difficult challenge is worth 150. Unlocking one hint leaves 50
-          points, two hints leave 0 points. A challenge you never solve gives nothing -
-          and an unused hint on an unsolved challenge costs nothing either.
-        </p>
-        <h3>How hints work</h3>
-        <p class="muted" style="margin-bottom:0">
-          Every challenge exposes up to three hints. They unlock strictly in order and
-          each one shows its price before you confirm it. A hint can only be bought while
-          the challenge is still open.
-        </p>
+        <h3>3. Solve challenges</h3>
+        <p>Work through 19 graded challenges with hints, attempts and a live scoreboard. Real-time team chat keeps you coordinated.</p>
+      </div>
+      <div class="panel">
+        <h3>4. Compete</h3>
+        <p>The captain starts the 90-minute clock. Highest score wins; ties broken by earliest last solve.</p>
       </div>
     </div>
   </section>
 
-  <section class="section" aria-labelledby="areas-title">
-    <div class="section__head">
-      <h2 id="areas-title">The four official areas</h2>
-    </div>
-    <div class="grid-2">
-      <div class="panel panel--tight">
-        <h3>1. Essential Security Principles</h3>
-        <p class="muted" style="margin-bottom:0">CIA triad, hashing, encoding, encryption, password security, authentication. Tools: base64, tr, john, hashcat, hashid, python3, CyberChef.</p>
-      </div>
-      <div class="panel panel--tight">
-        <h3>2. Basic Network Setup and Security</h3>
-        <p class="muted" style="margin-bottom:0">IP addressing, subnetting, ports and services, firewalls, packet analysis. Tools: nmap, ipcalc, Wireshark, tshark, iptables.</p>
-      </div>
-      <div class="panel panel--tight">
-        <h3>3. Endpoint Security Concepts</h3>
-        <p class="muted" style="margin-bottom:0">Logs, malware indicators, permissions, persistence, hardening. Tools: grep, logwatch, crontab, systemd, exiftool, binwalk, strings.</p>
-      </div>
-      <div class="panel panel--tight">
-        <h3>4. Vulnerability Assessment and Risk Management</h3>
-        <p class="muted" style="margin-bottom:0">Scan reports, CVSS, risk matrices, remediation. Tools: nmap, OpenVAS/GVM reporting, csvkit, xmllint, CVSS calculators.</p>
-      </div>
-    </div>
-  </section>
-
-  <section class="section" aria-labelledby="howto-title">
-    <div class="section__head">
-      <h2 id="howto-title">How to play</h2>
-    </div>
-    <ol class="rule-list panel">
-      <li><strong>Register the team</strong><span class="muted">Team name, school and the three member names.</span></li>
-      <li><strong>Prepare your toolkit</strong><span class="muted">On Kali Linux install nmap, wireshark/tshark, john, hashcat, hashid, binwalk, exiftool, strings and an offline copy of CyberChef, plus a wordlist such as rockyou.txt.</span></li>
-      <li><strong>Press "Start Competition"</strong><span class="muted">The 90 minute countdown starts and the challenge board unlocks.</span></li>
-      <li><strong>Download, analyse, submit</strong><span class="muted">Every challenge gives you files in /files. Use your Kali tools, find the flag and submit it in the challenge modal.</span></li>
-      <li><strong>Use hints sparingly</strong><span class="muted">Every hint costs points - a Difficult challenge is worth 150, one hint leaves 50.</span></li>
-      <li><strong>Watch the clock</strong><span class="muted">When the countdown hits zero the board is read only and the final ranking is shown on the scoreboard.</span></li>
-    </ol>
-    <div class="note" style="margin-top:1rem">
-      <strong>Offline first.</strong> This site works from <code>file://</code>, from
-      <code>python3 -m http.server</code> and from a LAN address such as
-      <code>http://192.168.1.20:8000</code>. Over plain HTTP the browser does not expose
-      <code>crypto.subtle</code>, so a bundled pure JavaScript SHA-256 takes over - flag
-      checking keeps working.
-    </div>
+  <section class="section" aria-labelledby="announcements-title">
+    <div class="section__head"><h2 id="announcements-title">Announcements</h2></div>
+    <div id="announcements-list" class="grid-2"></div>
   </section>
 
 </main>
 
 <footer class="footer">
   <div class="wrap footer__inner">
-    <span>IT Skills Olympics 2026 &middot; Cybersecurity Category &middot; practice simulator</span>
-    <span>Scores are stored in your browser only.</span>
+    <span>IT Skills Olympics 2026 &middot; Cybersecurity Category</span>
+    <span id="footer-auth"></span>
   </div>
 </footer>
 
 <div class="page-status" id="page-status" role="status" aria-live="polite" data-visible="false"></div>
 
-<script src="js/sha256.js"></script>
 <script src="js/config.js"></script>
-<script src="js/challenges.js"></script>
-<script src="js/app.js"></script>
+<script src="js/auth.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var nav = document.getElementById("topbar-nav");
+  var authBox = document.getElementById("topbar-auth");
+  var footerAuth = document.getElementById("footer-auth");
+  var heroCta = document.getElementById("hero-cta");
+  var announcementsList = document.getElementById("announcements-list");
+
+  function renderNav(user) {
+    if (!user) {
+      nav.innerHTML =
+        '<a href="login.html">Sign in</a>' +
+        '<a href="signup.html" class="btn btn--primary" style="margin-left:0.5rem;padding:0.4rem 0.9rem">Sign up</a>';
+      authBox.innerHTML = '<span class="pill">Not signed in</span>';
+      footerAuth.innerHTML = '<a href="login.html">Sign in</a> &middot; <a href="signup.html">Create account</a>';
+      heroCta.innerHTML =
+        '<a href="signup.html" class="btn btn--primary">Create account</a>' +
+        '<a href="login.html" class="btn btn--ghost">Sign in</a>' +
+        '<a href="challenges.html" class="btn btn--ghost">Challenge board</a>';
+    } else {
+      nav.innerHTML =
+        '<a href="dashboard.html">Dashboard</a>' +
+        '<a href="teams.html">Teams</a>' +
+        '<a href="challenges.html">Challenges</a>' +
+        '<a href="scoreboard.html">Scoreboard</a>' +
+        '<a href="profile.html" style="margin-left:0.5rem">'+ esc(user.username) +'</a>' +
+        '<button class="btn btn--ghost" id="logout-btn" style="margin-left:0.5rem">Sign out</button>';
+      authBox.innerHTML = '<span class="pill">'+ esc(user.username) +'</span>';
+      footerAuth.innerHTML = '<a href="dashboard.html">Dashboard</a> &middot; <button id="footer-logout" style="background:none;border:none;color:inherit;cursor:pointer;padding:0;font:inherit">Sign out</button>';
+      heroCta.innerHTML =
+        '<a href="dashboard.html" class="btn btn--primary">Go to dashboard</a>' +
+        '<a href="teams.html" class="btn btn--ghost">Teams</a>';
+    }
+  }
+
+  function esc(s) { return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+  function flash(msg, tone) {
+    var box = document.getElementById("page-status");
+    box.textContent = msg; box.className = "page-status" + (tone ? " page-status--" + tone : "");
+    box.setAttribute("data-visible", "true");
+    setTimeout(function () { box.setAttribute("data-visible", "false"); }, 5000);
+  }
+
+  function loadAnnouncements() {
+    window.Auth.announcements().then(function (data) {
+      var list = data.announcements || [];
+      if (!list.length) { announcementsList.innerHTML = '<p class="muted">No announcements.</p>'; return; }
+      announcementsList.innerHTML = list.map(function (a) {
+        return '<div class="announcement">' +
+          '<h3>' + esc(a.title) + '</h3>' +
+          '<div class="meta">by '+ esc(a.author_username) +' &middot; '+ new Date(a.created_at).toLocaleString() +'</div>' +
+          '<div class="body">'+ esc(a.body) +'</div>' +
+          '</div>';
+      }).join("");
+    }).catch(function () { announcementsList.innerHTML = '<p class="muted">Announcements unavailable.</p>'; });
+  }
+
+  function onLogout(btn) {
+    if (!btn) return;
+    btn.addEventListener("click", function () {
+      window.Auth.logout().then(function () { location.reload(); });
+    });
+  }
+
+  window.Auth.load().then(function (user) {
+    renderNav(user);
+    loadAnnouncements();
+    onLogout(document.getElementById("logout-btn"));
+    onLogout(document.getElementById("footer-logout"));
+    if (user) {
+      // logged in: go to dashboard
+      location.replace("dashboard.html");
+    }
+  });
+})();
+</script>
 </body>
 </html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Profile &middot; IT Skills Olympics 2026</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="profile">
+
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<header class="topbar">
+  <div class="wrap topbar__inner">
+    <a class="brand" href="index.html">
+      <span class="brand__mark" aria-hidden="true">&gt;_</span>
+      <span class="brand__text"><strong>IT Skills Olympics 2026</strong><span>Cybersecurity Category</span></span>
+    </a>
+    <nav class="topbar__nav" aria-label="Main navigation">
+      <a href="dashboard.html">Dashboard</a>
+      <a href="profile.html" aria-current="page">Profile</a>
+    </nav>
+    <div class="topbar__status">
+      <button class="btn btn--ghost btn--small" id="logout-btn">Sign out</button>
+    </div>
+  </div>
+</header>
+
+<main id="main" class="wrap page">
+  <div class="page-status" id="flash" role="status" aria-live="polite" data-visible="false"></div>
+
+  <section class="section">
+    <div class="section__head"><h2>Account settings</h2></div>
+    <div class="grid-2">
+      <div class="auth-card panel">
+        <h3 style="margin-top:0">Your profile</h3>
+        <div id="profile-info" class="muted small" style="line-height:1.8">Loading…</div>
+      </div>
+      <div class="panel">
+        <h3 style="margin-top:0">Change password</h3>
+        <form id="pw-form" novalidate>
+          <div class="field">
+            <label for="old_password">Current password</label>
+            <input type="password" id="old_password" name="old_password" required>
+          </div>
+          <div class="field">
+            <label for="new_password">New password</label>
+            <input type="password" id="new_password" name="new_password" required minlength="8">
+          </div>
+          <div class="field">
+            <label for="confirm">Confirm new password</label>
+            <input type="password" id="confirm" name="confirm" required>
+          </div>
+          <button type="submit" class="btn btn--primary" id="pw-btn">Update password</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap footer__inner">
+    <span>IT Skills Olympics 2026 &middot; Cybersecurity Category</span>
+  </div>
+</footer>
+
+<div class="page-status" id="page-status" role="status" aria-live="polite" data-visible="false"></div>
+
+<script src="js/auth.js"></script>
+<script>
+(function () {
+  "use strict";
+  var user = null;
+  function flash(msg, tone) {
+    var box = document.getElementById("flash");
+    box.textContent = msg; box.className = "page-status" + (tone ? " page-status--" + tone : "");
+    box.setAttribute("data-visible", "true");
+    setTimeout(function () { box.setAttribute("data-visible", "false"); }, 5000);
+  }
+  function esc(s) { return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+  document.getElementById("logout-btn").addEventListener("click", function () {
+    window.Auth.logout().then(function () { location.href = "login.html"; });
+  });
+
+  window.Auth.load().then(function (u) {
+    user = u;
+    if (!user) { location.href = "login.html"; return; }
+    var info = document.getElementById("profile-info");
+    info.innerHTML =
+      '<div><strong>Username:</strong> '+ esc(user.username) +'</div>' +
+      '<div><strong>Email:</strong> '+ esc(user.email) +'</div>' +
+      '<div><strong>Role:</strong> '+ esc(user.role) +'</div>' +
+      '<div><strong>Email verified:</strong> '+ (user.email_verified ? "Yes" : "No") +'</div>' +
+      '<div><strong>Member since:</strong> '+ new Date(user.created_at || Date.now()).toLocaleDateString() +'</div>' +
+      (user.team ? '<div><strong>Team:</strong> '+ esc(user.team.name) +' ('+ (user.members || []).length +'/3 members)</div>' : '<div class="muted"><strong>Team:</strong> none</div>');
+  });
+
+  document.getElementById("pw-form").addEventListener("submit", function (event) {
+    event.preventDefault();
+    // password change isn't a separate endpoint; use reset flow would need token. 
+    // For now, inform user to use forgot password.
+    flash("Use \"Forgot password\" on the sign-in page to change your password.", "info");
+  });
+})();
+</script>
+</body>
+</html>

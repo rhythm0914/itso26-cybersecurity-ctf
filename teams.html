@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Teams &middot; IT Skills Olympics 2026</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="teams">
+
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<header class="topbar">
+  <div class="wrap topbar__inner">
+    <a class="brand" href="index.html">
+      <span class="brand__mark" aria-hidden="true">&gt;_</span>
+      <span class="brand__text"><strong>IT Skills Olympics 2026</strong><span>Cybersecurity Category</span></span>
+    </a>
+    <nav class="topbar__nav" aria-label="Main navigation">
+      <a href="dashboard.html">Dashboard</a>
+      <a href="teams.html" aria-current="page">Teams</a>
+      <a href="challenges.html">Challenges</a>
+    </nav>
+    <div class="topbar__status">
+      <button class="btn btn--ghost btn--small" id="logout-btn">Sign out</button>
+    </div>
+  </div>
+</header>
+
+<main id="main" class="wrap page">
+  <div class="page-status" id="flash" role="status" aria-live="polite" data-visible="false"></div>
+
+  <section class="section">
+    <div class="section__head">
+      <h2>Find a team</h2>
+    </div>
+    <div class="filters" role="group" aria-label="Team filters">
+      <input type="search" id="team-search" placeholder="Search team name…" aria-label="Search teams">
+      <label style="margin:0 0 0 0.5rem"><input type="checkbox" id="filter-recruiting"> Recruiting only</label>
+      <div style="margin-left:auto">
+        <span class="pill" id="team-count">0 teams</span>
+      </div>
+    </div>
+    <div id="teams-grid" class="card-grid"></div>
+  </section>
+
+  <section class="section" aria-labelledby="my-team-title">
+    <div class="section__head"><h2 id="my-team-title">My team &amp; requests</h2></div>
+    <div id="my-team-box" class="panel" hidden>
+      <h3 style="margin-top:0">Current team</h3>
+      <div id="my-team-detail" class="muted small"></div>
+      <div class="button-row" style="margin-top:0.75rem">
+        <button class="btn btn--primary" id="btn-view-my-team">View team</button>
+        <button class="btn btn--ghost" id="btn-leave-my-team">Leave team</button>
+      </div>
+    </div>
+    <div id="my-requests-box" class="panel" style="margin-top:1rem">
+      <h3 style="margin-top:0">My join requests</h3>
+      <div id="my-requests-list" style="max-height:260px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);background:#0c0c0d;padding:0.75rem">
+        <div class="muted small">Loading…</div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap footer__inner">
+    <span>IT Skills Olympics 2026 &middot; Cybersecurity Category</span>
+  </div>
+</footer>
+
+<div class="page-status" id="page-status" role="status" aria-live="polite" data-visible="false"></div>
+
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<script>
+(function () {
+  "use strict";
+  var user = null;
+  function flash(msg, tone) {
+    var box = document.getElementById("flash");
+    box.textContent = msg; box.className = "page-status" + (tone ? " page-status--" + tone : "");
+    box.setAttribute("data-visible", "true");
+    setTimeout(function () { box.setAttribute("data-visible", "false"); }, 5000);
+  }
+  function esc(s) { return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+  function renderTeams() {
+    var grid = document.getElementById("teams-grid");
+    var search = document.getElementById("team-search").value.toLowerCase();
+    var recruitingOnly = document.getElementById("filter-recruiting").checked;
+    window.Auth.myTeams().then(function (data) {
+      var teams = data.teams || [];
+      var html = "";
+      var shown = 0;
+      teams.forEach(function (t) {
+        if (recruitingOnly && !t.recruiting) return;
+        if (search && t.name.toLowerCase().indexOf(search) === -1) return;
+        shown++;
+        html += '<article class="card" style="cursor:pointer" onclick="location.href=\'team.html?id=\'+encodeURIComponent(\'' + esc(t.id) + '\')\'" tabindex="0" role="button">' +
+          '<div class="card__top">' +
+          '<span class="badge ' + (t.recruiting ? 'badge--solved' : 'badge--locked') + '">' + (t.recruiting ? 'recruiting' : 'closed') + '</span>' +
+          '<span class="card__points">' + t.available_slots + '/' + t.max_size + ' slots</span>' +
+          '</div>' +
+          '<h3 class="card__title">' + esc(t.name) + '</h3>' +
+          '<p class="card__topic">' + (t.school ? esc(t.school) : 'no school') + (t.captain ? ' &middot; captain: ' + esc(t.captain) : '') + '</p>' +
+          '<p class="card__meta">' + t.member_count + ' member' + (t.member_count !== 1 ? 's' : '') + '</p>' +
+          '<p class="card__status card__status--' + (t.available_slots > 0 && t.recruiting ? 'open' : 'locked') + '">' +
+          (t.available_slots > 0 && t.recruiting ? '&#9679; Open' : '&#128274; Not accepting') + '</p>' +
+          '</article>';
+      });
+      if (!html) html = '<p class="empty-state">No teams match your search.</p>';
+      grid.innerHTML = html;
+      document.getElementById("team-count").textContent = shown + " team" + (shown !== 1 ? "s" : "");
+    }).catch(function () { grid.innerHTML = '<p class="muted">Could not load teams.</p>'; });
+  }
+
+  function renderMy() {
+    window.Auth.load().then(function (u) {
+      user = u;
+      var box = document.getElementById("my-team-box");
+      var detail = document.getElementById("my-team-detail");
+      var reqList = document.getElementById("my-requests-list");
+      if (!user || !user.team) {
+        box.hidden = true;
+      } else {
+        box.hidden = false;
+        detail.textContent = esc(user.team.name) + " &middot; " + (user.members || []).length + "/3 members";
+        document.getElementById("btn-view-my-team").onclick = function () { location.href = "team.html?id=" + encodeURIComponent(user.team.id); };
+        document.getElementById("btn-leave-my-team").onclick = function () {
+          if (!confirm("Leave your team?")) return;
+          window.Auth.leaveTeam(user.team.id).then(function () {
+            flash("You left the team.", "ok"); location.reload();
+          }).catch(function (e) { flash(e.message || "Could not leave team.", "error"); });
+        };
+      }
+      // my requests
+      window.Auth.notifications(false).then(function () {
+        // requests are per-team; list pending requests for teams where user is captain
+        if (!user || !user.team) { reqList.innerHTML = '<div class="muted small">No team.</div>'; return; }
+        window.Auth.listRequests(user.team.id, "pending").then(function (data) {
+          var reqs = data.requests || [];
+          if (!reqs.length) { reqList.innerHTML = '<div class="muted small">No pending requests.</div>'; return; }
+          reqList.innerHTML = reqs.map(function (r) {
+            return '<div class="notification-item unread" style="margin-bottom:0.5rem">' +
+              '<div class="content">' +
+              '<div class="title">'+ esc(r.requester.username) +' wants to join</div>' +
+              '<div class="body">'+ esc(r.message || '(no message)') +'</div>' +
+              '</div>' +
+              '<div style="display:flex;gap:0.4rem">' +
+              '<button class="btn btn--primary btn--small" onclick="approveReq(\''+ esc(r.id) +'\')">Approve</button>' +
+              '<button class="btn btn--ghost btn--small" onclick="rejectReq(\''+ esc(r.id) +'\')">Reject</button>' +
+              '</div>' +
+              '</div>';
+          }).join("");
+        }).catch(function () { reqList.innerHTML = '<div class="muted small">Could not load requests.</div>'; });
+      });
+    });
+  }
+
+  window.approveReq = function (id) {
+    window.Auth.approveRequest(user.team.id, id).then(function () {
+      flash("Request approved.", "ok"); renderMy();
+    }).catch(function (e) { flash(e.message || "Could not approve.", "error"); });
+  };
+  window.rejectReq = function (id) {
+    window.Auth.rejectRequest(user.team.id, id).then(function () {
+      flash("Request rejected.", "ok"); renderMy();
+    }).catch(function (e) { flash(e.message || "Could not reject.", "error"); });
+  };
+
+  document.getElementById("team-search").addEventListener("input", renderTeams);
+  document.getElementById("filter-recruiting").addEventListener("change", renderTeams);
+  document.getElementById("logout-btn").addEventListener("click", function () {
+    window.Auth.logout().then(function () { location.href = "login.html"; });
+  });
+
+  window.Auth.load().then(function () {
+    renderTeams();
+    renderMy();
+  });
+})();
+</script>
+</body>
+</html>

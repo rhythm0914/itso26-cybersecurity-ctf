@@ -38,14 +38,15 @@ export const onRequestPost = async (context) => {
   if (member.slot_index !== 0) return json({ error: "only the team creator can control the clock" }, 403);
 
   const now = Date.now();
+  const nowStr = String(now);
   let startedAt = null;
   let endedAt = null;
 
   if (action === "start" || action === "restart") {
-    startedAt = now;
-    endedAt = now + 90 * 60 * 1000; // 90 minutes
+    startedAt = nowStr;
+    endedAt = String(now + 90 * 60 * 1000);
   } else if (action === "end") {
-    endedAt = now;
+    endedAt = nowStr;
   }
 
   try {

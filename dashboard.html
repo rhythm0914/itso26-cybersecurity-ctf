@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Dashboard &middot; IT Skills Olympics 2026</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="dashboard">
+
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<header class="topbar">
+  <div class="wrap topbar__inner">
+    <a class="brand" href="index.html">
+      <span class="brand__mark" aria-hidden="true">&gt;_</span>
+      <span class="brand__text"><strong>IT Skills Olympics 2026</strong><span>Cybersecurity Category</span></span>
+    </a>
+    <nav class="topbar__nav" aria-label="Main navigation">
+      <a href="dashboard.html" aria-current="page">Dashboard</a>
+      <a href="teams.html">Teams</a>
+      <a href="challenges.html">Challenges</a>
+      <a href="scoreboard.html">Scoreboard</a>
+      <a href="profile.html">Profile</a>
+    </nav>
+    <div class="topbar__status">
+      <span class="pill" id="dash-role"></span>
+      <button class="btn btn--ghost btn--small" id="logout-btn">Sign out</button>
+    </div>
+  </div>
+</header>
+
+<main id="main" class="wrap page">
+  <div class="page-status" id="flash" role="status" aria-live="polite" data-visible="false"></div>
+
+  <section class="section">
+    <div class="section__head">
+      <h2>Dashboard <span id="dash-welcome" class="muted small"></span></h2>
+    </div>
+    <div class="grid-2">
+      <div class="panel stat-card">
+        <div class="big" id="dash-score">0</div>
+        <div class="label">Team score</div>
+      </div>
+      <div class="panel stat-card">
+        <div class="big" id="dash-solved">0</div>
+        <div class="label">Challenges solved</div>
+      </div>
+      <div class="panel stat-card">
+        <div class="big" id="dash-rank">—</div>
+        <div class="label">Leaderboard rank</div>
+      </div>
+      <div class="panel stat-card">
+        <div class="big" id="dash-clock">—:--</div>
+        <div class="label">Time left</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Team card -->
+  <section class="section" aria-labelledby="team-title">
+    <div class="section__head"><h2 id="team-title">Your team</h2></div>
+    <div id="dash-team-empty" class="panel" style="text-align:center;padding:2.5rem 1rem">
+      <h3 style="margin-top:0">No team yet</h3>
+      <p class="muted">Create a team or find an existing one to compete with others.</p>
+      <div class="button-row" style="justify-content:center;margin-top:1rem">
+        <button class="btn btn--primary" id="btn-create-team">Create a team</button>
+        <button class="btn btn--ghost" id="btn-find-team">Find a team</button>
+      </div>
+    </div>
+    <div id="dash-team-card" class="panel team-card" hidden>
+      <div class="team-card__info">
+        <h3 id="dash-team-name">—</h3>
+        <div class="team-card__meta" id="dash-team-meta">— &middot; 0/3 members</div>
+      </div>
+      <div class="team-card__actions">
+        <button class="btn btn--primary" id="btn-open-chat">Team chat</button>
+        <button class="btn btn--ghost" id="btn-view-team">View team</button>
+        <button class="btn btn--ghost" id="btn-leave-team">Leave team</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quick actions -->
+  <section class="section" aria-labelledby="actions-title">
+    <div class="section__head"><h2 id="actions-title">Quick actions</h2></div>
+    <div class="grid-2">
+      <div class="panel">
+        <h3 style="margin-top:0">Competition status</h3>
+        <div id="dash-comp-status" class="muted small" style="font-family:var(--mono)">Loading…</div>
+        <p class="muted small" style="margin-top:0.5rem">The 90-minute clock starts when your captain presses "Start Competition".</p>
+      </div>
+      <div class="panel">
+        <h3 style="margin-top:0">Your notifications</h3>
+        <div id="dash-notifications" style="max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);background:#0c0c0d;padding:0.75rem">
+          <div class="muted small">Loading notifications…</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Challenge progress preview -->
+  <section class="section" aria-labelledby="progress-title">
+    <div class="section__head"><h2 id="progress-title">Challenge progress</h2></div>
+    <div id="dash-progress" class="grid-2"></div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap footer__inner">
+    <span>IT Skills Olympics 2026 &middot; Cybersecurity Category</span>
+  </div>
+</footer>
+
+<script src="js/config.js"></script>
+<script src="js/challenges.js"></script>
+<script src="js/auth.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var CFG = window.CTF_CONFIG || {};
+  var ALL = window.CTF_CHALLENGES || [];
+  var user = null;
+
+  function flash(msg, tone) {
+    var box = document.getElementById("flash");
+    box.textContent = msg; box.className = "page-status" + (tone ? " page-status--" + tone : "");
+    box.setAttribute("data-visible", "true");
+    setTimeout(function () { box.setAttribute("data-visible", "false"); }, 5000);
+  }
+
+  function esc(s) { return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+  function fmtMs(ms) {
+    var total = Math.floor(Math.max(0, ms) / 1000);
+    var h = Math.floor(total / 3600), m = Math.floor((total % 3600) / 60), s = total % 60;
+    return (h > 0 ? h + ":" : "") + (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s;
+  }
+
+  function renderWelcome() {
+    var el = document.getElementById("dash-welcome");
+    if (user) el.textContent = "Welcome, " + esc(user.username) + " (" + user.role + ")";
+  }
+
+  function renderScore() {
+    document.getElementById("dash-score").textContent = user ? (user.team && user.team ? 0 : 0) : 0;
+    // actual score computed below from team data
+  }
+
+  function renderTeam() {
+    var empty = document.getElementById("dash-team-empty");
+    var card = document.getElementById("dash-team-card");
+    if (!user || !user.team) {
+      empty.hidden = false; card.hidden = true;
+      document.getElementById("btn-create-team").onclick = function () { location.href = "create-team.html"; };
+      document.getElementById("btn-find-team").onclick = function () { location.href = "teams.html"; };
+      return;
+    }
+    empty.hidden = true; card.hidden = false;
+    var team = user.team;
+    document.getElementById("dash-team-name").textContent = esc(team.name);
+    var mc = (user.members || []).length;
+    document.getElementById("dash-team-meta").textContent = mc + "/3 members" + (team.started_at ? " &middot; clock running" : "");
+    document.getElementById("btn-view-team").onclick = function () { location.href = "team.html?id=" + encodeURIComponent(team.id); };
+    document.getElementById("btn-open-chat").onclick = function () { location.href = "team.html?id=" + encodeURIComponent(team.id) + "#chat"; };
+    document.getElementById("btn-leave-team").onclick = function () {
+      if (!confirm("Leave your team? Your membership will be removed.")) return;
+      window.Auth.leaveTeam(team.id).then(function () {
+        flash("You left the team.", "ok");
+        location.reload();
+      }).catch(function (e) { flash(e.message || "Could not leave team.", "error"); });
+    };
+  }
+
+  function renderNotifications() {
+    var box = document.getElementById("dash-notifications");
+    if (!user) { box.innerHTML = '<div class="muted small">Sign in to see notifications.</div>'; return; }
+    window.Auth.notifications(true).then(function (data) {
+      var notifs = data.notifications || [];
+      if (!notifs.length) { box.innerHTML = '<div class="muted small">No unread notifications.</div>'; return; }
+      box.innerHTML = notifs.slice(0, 8).map(function (n) {
+        return '<div class="notification-item unread">' +
+          '<span class="type">'+ esc(n.type) +'</span>' +
+          '<div class="content">' +
+          '<div class="title">'+ esc(n.title) +'</div>' +
+          '<div class="body">'+ esc(n.body) +'</div>' +
+          '<div class="time">'+ new Date(n.created_at).toLocaleString() +'</div>' +
+          '</div>' +
+          '</div>';
+      }).join("");
+    }).catch(function () { box.innerHTML = '<div class="muted small">Notifications unavailable.</div>'; });
+  }
+
+  function renderProgress() {
+    var box = document.getElementById("dash-progress");
+    var cats = CFG.categories || [];
+    var html = "";
+    cats.forEach(function (cat) {
+      var list = ALL.filter(function (ch) { return ch.category === cat.name; });
+      var solved = 0;
+      if (user && user.team) {
+        var solvedIds = Object.keys(user.team ? {} : {});
+      }
+      // We don't have per-user solved state easily here; show category totals
+      html += '<div class="panel panel--tight">' +
+        '<h3 style="margin:0 0 0.5rem;font-size:0.95rem">'+ esc(cat.name) +'</h3>' +
+        '<div class="progress-row"><span class="progress-row__label">'+ esc(cat.short || cat.name) +'</span>' +
+        '<div class="progress"><span class="progress__fill" style="width:0%"></span></div>' +
+        '<span class="progress-row__value">0/'+ list.length +'</span></div>' +
+        '</div>';
+    });
+    box.innerHTML = html;
+  }
+
+  function load() {
+    window.Auth.load().then(function (u) {
+      user = u;
+      renderWelcome();
+      renderTeam();
+      renderNotifications();
+      renderProgress();
+      renderScore();
+      // fetch scoreboard for rank + score
+      fetch(window.CTF_CONFIG.apiBase + "/api/scoreboard").then(function (r) { return r.json(); }).then(function (data) {
+        var teams = data.teams || [];
+        var myTeamId = (user && user.team && user.team.id) || null;
+        var myEntry = teams.find(function (t) { return t.id === myTeamId; });
+        if (myEntry) {
+          document.getElementById("dash-score").textContent = myEntry.score;
+          document.getElementById("dash-solved").textContent = myEntry.solved;
+          document.getElementById("dash-rank").textContent = "#" + myEntry.rank;
+        } else if (user && user.team) {
+          document.getElementById("dash-rank").textContent = "unranked";
+        }
+      }).catch(function () {});
+      // clock
+      if (user && user.team && user.team.ended_at) {
+        var end = user.team.ended_at;
+        var iv = setInterval(function () {
+          var left = end - Date.now();
+          document.getElementById("dash-clock").textContent = left > 0 ? fmtMs(left) : "0:00";
+          if (left <= 0) clearInterval(iv);
+        }, 1000);
+      } else {
+        document.getElementById("dash-clock").textContent = "not started";
+      }
+    });
+  }
+
+  document.getElementById("logout-btn").addEventListener("click", function () {
+    window.Auth.logout().then(function () { location.href = "login.html"; });
+  });
+
+  load();
+})();
+</script>
+</body>
+</html>

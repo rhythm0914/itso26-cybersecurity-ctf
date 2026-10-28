@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Sign in &middot; IT Skills Olympics 2026</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="auth">
+
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<header class="topbar">
+  <div class="wrap topbar__inner">
+    <a class="brand" href="index.html">
+      <span class="brand__mark" aria-hidden="true">&gt;_</span>
+      <span class="brand__text"><strong>IT Skills Olympics 2026</strong><span>Cybersecurity Category</span></span>
+    </a>
+    <a href="index.html" class="btn btn--ghost" style="margin-left:auto">Back to home</a>
+  </div>
+</header>
+
+<main id="main" class="wrap page">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <h2>Sign in</h2>
+      <form id="login-form" novalidate>
+        <div class="field">
+          <label for="email">Email address</label>
+          <input type="email" id="email" name="email" required placeholder="you@example.com">
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" required placeholder="&#x25cf;&#x25cf;&#x25cf;&#x25cf;&#x25cf;&#x25cf;&#x25cf;&#x25cf;">
+        </div>
+        <div class="button-row">
+          <button type="submit" class="btn btn--primary btn--block" id="login-btn">Sign in</button>
+        </div>
+        <p class="muted small" style="text-align:center;margin-top:0.75rem">
+          Don't have an account? <a href="signup.html">Create one</a>.
+        </p>
+        <p class="muted small" style="text-align:center;margin-top:0.5rem">
+          Forgot your password? <a href="forgot-password.html">Reset it</a>.
+        </p>
+      </form>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="wrap footer__inner">
+    <span>IT Skills Olympics 2026 &middot; Cybersecurity Category</span>
+  </div>
+</footer>
+
+<div class="page-status" id="page-status" role="status" aria-live="polite" data-visible="false"></div>
+
+<script src="js/auth.js"></script>
+<script>
+(function () {
+  "use strict";
+  var form = document.getElementById("login-form");
+  var btn = document.getElementById("login-btn");
+  var orig = btn.textContent;
+
+  form.addEventListener("submit", function (event) {
+    event.preventDefault();
+    var email = String(form.elements.email.value || "").trim();
+    var password = String(form.elements.password.value || "");
+    if (!email || !password) { flash("Please enter email and password.", "error"); return; }
+    btn.disabled = true; btn.textContent = "Signing in…";
+    window.Auth.login(email, password).then(function (data) {
+      btn.disabled = false; btn.textContent = orig;
+      if (data && data.ok) { flash("Signed in as " + data.user.username + ".", "ok"); location.replace("dashboard.html"); }
+      else { flash(data && data.error ? data.error : "Sign in failed.", "error"); }
+    }).catch(function (err) {
+      btn.disabled = false; btn.textContent = orig;
+      flash(err.status === 401 ? "Invalid email or password." : "Sign in failed. Try again.", "error");
+    });
+  });
+
+  function flash(msg, tone) {
+    var box = document.getElementById("page-status");
+    box.textContent = msg; box.className = "page-status" + (tone ? " page-status--" + tone : "");
+    box.setAttribute("data-visible", "true");
+    setTimeout(function () { box.setAttribute("data-visible", "false"); }, 5000);
+  }
+})();
+</script>
+</body>
+</html>

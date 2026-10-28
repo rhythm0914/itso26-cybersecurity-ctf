@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Team &middot; IT Skills Olympics 2026</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .team-header { display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1rem; }
+  .roster { display:flex;flex-direction:column;gap:0.5rem; }
+  .roster-item { display:flex;align-items:center;gap:0.75rem;padding:0.6rem 0.9rem;border:1px solid var(--border);border-radius:var(--radius);background:#0c0c0d; }
+  .roster-item .role { font-size:0.72rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:var(--accent); }
+  .roster-item .name { flex:1;font-weight:600; }
+  .roster-item .empty { color:var(--text-dim);font-style:italic; }
+  .join-box { border:1px solid var(--border);border-radius:var(--radius);padding:1rem;background:var(--panel);margin-top:1rem; }
+  .chat-header { display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem; }
+</style>
+</head>
+<body data-page="team">
+
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<header class="topbar">
+  <div class="wrap topbar__inner">
+    <a class="brand" href="index.html">
+      <span class="brand__mark" aria-hidden="true">&gt;_</span>
+      <span class="brand__text"><strong>IT Skills Olympics 2026</strong><span>Cybersecurity Category</span></span>
+    </a>
+    <nav class="topbar__nav" aria-label="Main navigation">
+      <a href="dashboard.html">Dashboard</a>
+      <a href="teams.html">Teams</a>
+      <a href="challenges.html">Challenges</a>
+    </nav>
+    <div class="topbar__status">
+      <button class="btn btn--ghost btn--small" id="logout-btn">Sign out</button>
+    </div>
+  </div>
+</header>
+
+<main id="main" class="wrap page">
+  <div class="page-status" id="flash" role="status" aria-live="polite" data-visible="false"></div>
+
+  <section class="section">
+    <div class="section__head">
+      <h2 id="team-page-title">Team</h2>
+    </div>
+    <div id="team-loader" class="panel" style="text-align:center;padding:2rem">Loading team…</div>
+
+    <div id="team-content" hidden>
+      <div class="team-header">
+        <div>
+          <h2 id="team-name">—</h2>
+          <div id="team-meta" class="muted small"></div>
+        </div>
+        <div id="team-actions" style="display:flex;gap:0.5rem;flex-wrap:wrap"></div>
+      </div>
+
+      <div class="grid-2" style="margin-top:1rem">
+        <div class="panel" style="min-width:0">
+          <h3 style="margin-top:0">Roster</h3>
+          <div id="roster" class="roster"></div>
+          <div id="roster-empty" class="muted small" style="text-align:center;padding:1rem">No members.</div>
+        </div>
+        <div class="panel" style="min-width:0">
+          <h3 style="margin-top:0">Join this team</h3>
+          <div id="join-section">
+            <div class="join-box">
+              <div class="field">
+                <label for="join-code">Join code</label>
+                <input type="text" id="join-code" placeholder="Paste join code">
+              </div>
+              <div class="field">
+                <label for="join-name">Your name</label>
+                <input type="text" id="join-name" placeholder="Your display name">
+              </div>
+              <button class="btn btn--primary" id="btn-join-code">Join by code</button>
+            </div>
+          </div>
+          <div id="join-request-section" style="margin-top:1rem"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" style="margin-top:1rem">
+    <div class="section__head"><h2>Team chat</h2></div>
+    <div class="chat-wrap">
+      <div class="chat-sidebar">
+        <div style="font-weight:700;margin-bottom:0.5rem">Members</div>
+        <div id="chat-members" style="font-size:0.85rem;color:var(--text-muted)"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;height:100%">
+        <div class="chat-messages" id="chat-messages" style="flex:1"></div>
+        <div class="chat-compose">
+          <input type="text" id="chat-input" placeholder="Type a message…" autocomplete="off">
+          <button class="btn btn--primary btn--small" id="chat-send">Send</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap footer__inner">
+    <span>IT Skills Olympics 2026 &middot; Cybersecurity Category</span>
+  </div>
+</footer>
+
+<div class="page-status" id="page-status" role="status" aria-live="polite" data-visible="false"></div>
+
+<script src="js/auth.js"></script>
+<script>
+(function () {
+  "use strict";
+  var user = null, teamId = null, pollTimer = null;
+  function flash(msg, tone) {
+    var box = document.getElementById("flash");
+    box.textContent = msg; box.className = "page-status" + (tone ? " page-status--" + tone : "");
+    box.setAttribute("data-visible", "true");
+    setTimeout(function () { box.setAttribute("data-visible", "false"); }, 5000);
+  }
+  function esc(s) { return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+  function qs(k) {
+    var m = new URL(location.href).searchParams.get(k); return m;
+  }
+
+  function renderTeam(team, members) {
+    document.getElementById("team-loader").hidden = true;
+    document.getElementById("team-content").hidden = false;
+    document.getElementById("team-name").textContent = esc(team.name);
+    var meta = [];
+    if (team.school) meta.push(esc(team.school));
+    meta.push((members && members.length) + "/3 members");
+    if (team.recruitment) meta.push("recruiting");
+    document.getElementById("team-meta").textContent = meta.join(" &middot; ");
+
+    var actions = document.getElementById("team-actions");
+    actions.innerHTML = "";
+    var rosterBox = document.getElementById("roster");
+    var rosterEmpty = document.getElementById("roster-empty");
+    var chatMembers = document.getElementById("chat-members");
+
+    var isMember = user && (members || []).some(function (m) { return m.user_id === user.id; });
+    var isCaptain = isMember && (members || []).some(function (m) { return m.user_id === user.id && (m.is_captain === 1 || m.slot_index === 0); });
+
+    (members || []).forEach(function (m) {
+      var el = document.createElement("div");
+      el.className = "roster-item";
+      el.innerHTML = '<span class="role">'+ (m.is_captain === 1 || m.slot_index === 0 ? "CAPTAIN" : "MEMBER") +'</span>' +
+        '<span class="name">'+ esc(m.name) +' ('+ esc(m.user_id ? "user" : "guest") +')</span>' +
+        (m.user_id === (user && user.id) ? '<span class="badge badge--solved" style="font-size:0.7rem">you</span>' : '');
+      rosterBox.appendChild(el);
+      var cm = document.createElement("div");
+      cm.textContent = esc(m.name) + (m.user_id === (user && user.id) ? " (you)" : "");
+      chatMembers.appendChild(cm);
+    });
+    rosterEmpty.hidden = !!(members && members.length);
+    chatMembers.innerHTML = chatMembers.innerHTML || '<div class="muted small">No members.</div>';
+
+    // actions
+    if (isCaptain) {
+      var btnReq = document.createElement("button");
+      btnReq.className = "btn btn--primary";
+      btnReq.textContent = "Join requests";
+      btnReq.onclick = function () { location.href = "teams.html"; };
+      actions.appendChild(btnReq);
+    }
+    if (!isMember) {
+      var btnJoinReq = document.createElement("button");
+      btnJoinReq.className = "btn btn--primary";
+      btnJoinReq.textContent = "Request to join";
+      btnJoinReq.onclick = function () {
+        var msg = prompt("Message to the captain (optional):", "");
+        window.Auth.submitJoinRequest(teamId, msg || "").then(function () {
+          flash("Join request sent.", "ok");
+          setTimeout(function () { location.reload(); }, 800);
+        }).catch(function (e) { flash(e.message || "Could not send request.", "error"); });
+      };
+      actions.appendChild(btnJoinReq);
+    }
+
+    // join by code section
+    var joinSection = document.getElementById("join-section");
+    var joinReqSection = document.getElementById("join-request-section");
+    if (team.recruitment) {
+      joinSection.hidden = false;
+      document.getElementById("btn-join-code").onclick = function () {
+        var code = String(document.getElementById("join-code").value || "").trim();
+        var name = String(document.getElementById("join-name").value || "").trim();
+        if (!code || !name) { flash("Enter join code and your name.", "error"); return; }
+        // Use legacy join endpoint (sets ctf_member cookie) OR user join. We'll use user-authenticated join via team create flow.
+        // For now use the offline join endpoint which works with ctf_member cookie.
+        window.Auth.createTeam ? null : null;
+        // Use the legacy /api/teams/join (no session needed) via fetch with credentials
+        fetch(window.CTF_CONFIG.apiBase + "/api/teams/join", {
+          method: "POST", credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code: code, name: name })
+        }).then(function (r) { return r.json(); }).then(function (data) {
+          if (data.ok) { flash("Joined team " + esc(data.team.name) + ".", "ok"); setTimeout(function () { location.reload(); }, 800); }
+          else { flash(data.error || "Could not join.", "error"); }
+        }).catch(function () { flash("Could not join team.", "error"); });
+      };
+    } else {
+      joinSection.hidden = true;
+    }
+    if (isMember) {
+      joinRequestSection.innerHTML = '<p class="muted small">You are a member of this team.</p>';
+    } else if (!team.recruitment) {
+      joinRequestSection.innerHTML = '<p class="muted small">This team is not recruiting. You can still request to join.</p>' +
+        '<button class="btn btn--primary" style="margin-top:0.5rem" onclick="sendReq()">Request to join</button>';
+    }
+  }
+
+  window.sendReq = function () {
+    var msg = prompt("Message to the captain (optional):", "");
+    window.Auth.submitJoinRequest(teamId, msg || "").then(function () {
+      flash("Join request sent.", "ok");
+      setTimeout(function () { location.reload(); }, 800);
+    }).catch(function (e) { flash(e.message || "Could not send request.", "error"); });
+  };
+
+  function loadChat() {
+    if (!teamId) return;
+    window.Auth.chatMessages(teamId).then(function (data) {
+      var box = document.getElementById("chat-messages");
+      var msgs = data.messages || [];
+      box.innerHTML = msgs.map(function (m) {
+        var me = user && m.user_id === user.id;
+        return '<div class="chat-message' + (me ? ' me' : '') + '">' +
+          '<div class="who">' + esc(m.username) + '</div>' +
+          '<div class="body">' + esc(m.body) + '</div>' +
+          '<div class="time">' + new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) + '</div>' +
+          '</div>';
+      }).join("");
+      box.scrollTop = box.scrollHeight;
+    }).catch(function () {});
+  }
+
+  document.getElementById("chat-send").addEventListener("click", function () {
+    var input = document.getElementById("chat-input");
+    var text = String(input.value || "").trim();
+    if (!text) return;
+    input.disabled = true;
+    window.Auth.sendMessage(teamId, text).then(function () {
+      input.value = "";
+      loadChat();
+    }).catch(function (e) { flash(e.message || "Could not send message.", "error"); }).finally(function () {
+      input.disabled = false; input.focus();
+    });
+  });
+  document.getElementById("chat-input").addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); document.getElementById("chat-send").click(); }
+  });
+
+  document.getElementById("logout-btn").addEventListener("click", function () {
+    window.Auth.logout().then(function () { location.href = "login.html"; });
+  });
+
+  window.Auth.load().then(function (u) {
+    user = u;
+    teamId = qs("id");
+    if (!teamId) {
+      document.getElementById("team-loader").textContent = "No team specified.";
+      return;
+    }
+    window.Auth.teamDetail(teamId).then(function (data) {
+      renderTeam(data.team, data.members || []);
+      loadChat();
+      pollTimer = setInterval(loadChat, 4000);
+    }).catch(function () {
+      document.getElementById("team-loader").textContent = "Team not found or you do not have access.";
+    });
+  });
+})();
+</script>
+</body>
+</html>

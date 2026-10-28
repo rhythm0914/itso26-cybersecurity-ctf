@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Create a team &middot; IT Skills Olympics 2026</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="team">
+
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<header class="topbar">
+  <div class="wrap topbar__inner">
+    <a class="brand" href="index.html">
+      <span class="brand__mark" aria-hidden="true">&gt;_</span>
+      <span class="brand__text"><strong>IT Skills Olympics 2026</strong><span>Cybersecurity Category</span></span>
+    </a>
+    <a href="dashboard.html" class="btn btn--ghost" style="margin-left:auto">Back to dashboard</a>
+  </div>
+</header>
+
+<main id="main" class="wrap page">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <h2>Create a team</h2>
+      <p class="muted small" style="margin-bottom:1.25rem">You will become the team captain. You can invite teammates by sharing the join code.</p>
+      <form id="create-form" novalidate>
+        <div class="field">
+          <label for="team-name">Team name</label>
+          <input type="text" id="team-name" name="teamName" required placeholder="e.g. Null Pointers">
+        </div>
+        <div class="field">
+          <label for="team-slug">Team slug (URL identifier)</label>
+          <input type="text" id="team-slug" name="teamSlug" placeholder="auto-generated" maxlength="40">
+          <p class="hint text-muted">Used in the team URL. Leave blank to auto-generate from the name.</p>
+        </div>
+        <div class="field">
+          <label for="school">School / organisation</label>
+          <input type="text" id="school" name="school" placeholder="e.g. Northgate Technical College">
+        </div>
+        <div class="field">
+          <label for="motto">Motto (optional)</label>
+          <input type="text" id="motto" name="motto" placeholder="e.g. Root access only.">
+        </div>
+        <div class="field">
+          <label for="description">Description (optional)</label>
+          <textarea id="description" name="description" rows="3" placeholder="What is your team about?"></textarea>
+        </div>
+        <div class="field">
+          <label style="display:flex;align-items:center;gap:0.5rem;font-weight:500">
+            <input type="checkbox" id="recruiting" name="recruiting" checked>
+            Team is recruiting (appears in team search)
+          </label>
+        </div>
+        <div class="button-row">
+          <button type="submit" class="btn btn--primary btn--block" id="create-btn">Create team</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="wrap footer__inner">
+    <span>IT Skills Olympics 2026 &middot; Cybersecurity Category</span>
+  </div>
+</footer>
+
+<div class="page-status" id="page-status" role="status" aria-live="polite" data-visible="false"></div>
+
+<script src="js/auth.js"></script>
+<script>
+(function () {
+  "use strict";
+  var form = document.getElementById("create-form");
+  var btn = document.getElementById("create-btn");
+  var orig = btn.textContent;
+  function flash(msg, tone) {
+    var box = document.getElementById("page-status");
+    box.textContent = msg; box.className = "page-status" + (tone ? " page-status--" + tone : "");
+    box.setAttribute("data-visible", "true");
+    setTimeout(function () { box.setAttribute("data-visible", "false"); }, 5000);
+  }
+  function esc(s) { return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+  form.addEventListener("submit", function (event) {
+    event.preventDefault();
+    var fields = {
+      name: String(form.elements.teamName.value || "").trim(),
+      slug: String(form.elements.teamSlug.value || "").trim() || undefined,
+      school: String(form.elements.school.value || "").trim(),
+      motto: String(form.elements.motto.value || "").trim(),
+      description: String(form.elements.description.value || "").trim(),
+      recruitment: form.elements.recruiting.checked
+    };
+    if (!fields.name) { flash("Team name is required.", "error"); return; }
+    btn.disabled = true; btn.textContent = "Creating team…";
+    window.Auth.createTeam(fields).then(function (data) {
+      btn.disabled = false; btn.textContent = orig;
+      if (data && data.ok) {
+        flash("Team \"" + esc(data.team.name) + "\" created. Share this join code: " + data.joinCode, "ok");
+        setTimeout(function () { location.href = "team.html?id=" + encodeURIComponent(data.team.id); }, 1200);
+      } else {
+        flash(data && data.error ? data.error : "Could not create team.", "error");
+      }
+    }).catch(function (err) {
+      btn.disabled = false; btn.textContent = orig;
+      flash(err.status === 409 ? "You already belong to a team, or the slug is taken." : "Could not create team.", "error");
+    });
+  });
+})();
+</script>
+</body>
+</html>
