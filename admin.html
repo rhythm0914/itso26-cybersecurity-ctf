@@ -58,6 +58,43 @@
     </div>
   </section>
 
+<section class=\"section\" style=\"margin-top:2rem\">
+  <div class=\"section__head\"><h2>Manage Users</h2></div>
+  <div style=\"overflow-x:auto;\">
+    <table style=\"width:100%;border-collapse:collapse;\">
+      <thead>
+        <tr>
+          <th style=\"padding:0.5rem;text-align:left;\">Username</th>
+          <th style=\"padding:0.5rem;text-align:left;\">Email</th>
+          <th style=\"padding:0.5rem;text-align:left;\">Role</th>
+          <th style=\"padding:0.5rem;text-align:left;\">Verified</th>
+          <th style=\"padding:0.5rem;text-align:left;\">Actions</th>
+        </tr>
+      </thead>
+      <tbody id=\"users-table\"></tbody>
+    </table>
+  </div>
+  <button class=\"btn btn--primary\" style=\"margin-top:0.5rem;\" onclick=\"renderUsers()\">Refresh Users</button>
+</section>
+
+<section class=\"section\" style=\"margin-top:2rem\">
+  <div class=\"section__head\"><h2>Manage Teams</h2></div>
+  <div style=\"overflow-x:auto;\">
+    <table style=\"width:100%;border-collapse:collapse;\">
+      <thead>
+        <tr>
+          <th style=\"padding:0.5rem;text-align:left;\">Name</th>
+          <th style=\"padding:0.5rem;text-align:left;\">School</th>
+          <th style=\"padding:0.5rem;text-align:left;\">Members / Max</th>
+          <th style=\"padding:0.5rem;text-align:left;\">Actions</th>
+        </tr>
+      </thead>
+      <tbody id=\"teams-table\"></tbody>
+    </table>
+  </div>
+  <button class=\"btn btn--primary\" style=\"margin-top:0.5rem;\" onclick=\"renderTeams()\">Refresh Teams</button>
+</section>
+
 </main>
 
 <footer class="footer">
@@ -121,6 +158,54 @@
       document.getElementById("announce-title").value = "";
       document.getElementById("announce-body").value = "";
     }).catch(function (e) { flash(e.message || "Could not publish.", "error"); });
+  });
+// Initialize tables
+    renderUsers();
+    renderTeams();
+
+    function renderUsers() {
+      fetch(window.CTF_CONFIG.apiBase + "/api/admin/users?limit=100")
+        .then(r => r.json())
+        .then(data => {
+          const users = data.users || [];
+          const rows = users.map(u => `
+            <tr>
+              <td>${esc(u.username)}</td>
+              <td>${esc(u.email)}</td>
+              <td>${esc(u.role)}</td>
+              <td>${u.email_verified ? 'Yes' : 'No'}</td>
+              <td>
+                <button class="btn btn--ghost btn--small edit-user" data-id="${u.id}">Edit</button>
+                <button class="btn btn--ghost btn--small delete-user" data-id="${u.id}">Delete</button>
+              </td>
+            </tr>
+          `).join("");
+          document.getElementById("users-table").innerHTML = rows || "<tr><td colspan=6 class='muted'>No users.</td></tr>";
+        })
+        .catch(() => flash("Could not load users.", "error"));
+    }
+
+    function renderTeams() {
+      fetch(window.CTF_CONFIG.apiBase + "/api/admin/teams?limit=100")
+        .then(r => r.json())
+        .then(data => {
+          const teams = data.teams || [];
+          const rows = teams.map(t => `
+            <tr>
+              <td>${esc(t.name)}</td>
+              <td>${esc(t.school)}</td>
+              <td>${t.member_count || 0} / ${t.max_size}</td>
+              <td>
+                <button class="btn btn--ghost btn--small edit-team" data-id="${t.id}">Edit</button>
+                <button class="btn btn--ghost btn--small delete-team" data-id="${t.id}">Delete</button>
+              </td>
+            </tr>
+          `).join("");
+          document.getElementById("teams-table").innerHTML = rows || "<tr><td colspan=4 class='muted'>No teams.</td></tr>";
+        })
+        .catch(() => flash("Could not load teams.", "error"));
+    }
+
   });
 })();
 </script>
