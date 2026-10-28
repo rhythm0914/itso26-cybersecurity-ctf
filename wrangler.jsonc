@@ -9,8 +9,8 @@
 	"d1_databases": [
 		{
 			"binding": "DB",
-			"database_name": "itso26-ctf",
-			"database_id": "61dc7378-a98c-468f-b540-a51ab9e1bbbd",
+			"database_name": "itso26-cybersecurity-ctf",
+			"database_id": "26eec0b2-c3f8-4ba8-b004-1d78b2068c07",
 			"migrations_dir": "migrations"
 		}
 	]
