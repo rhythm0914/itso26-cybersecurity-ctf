@@ -1,8 +1,11 @@
 /**
  * POST /api/teams/create
  * Body: { name, school, slug?, motto?, description?, recruitment? }
+ *
+ * Uses two-step INSERT (minimal columns + UPDATE) to avoid D1 datatype
+ * mismatch on the Pages Workers runtime with wide bind-parameter lists.
  */
-import { json, errorResponse, cleanString, getSession } from "../../_lib.js";
+import { errorResponse, cleanString, getSession } from "../../_lib.js";
 
 function getMemberCookie(request) {
   const cookie = request.headers.get("cookie") || "";
@@ -52,11 +55,14 @@ export const onRequestPost = async (context) => {
       memberIdNew = crypto.randomUUID();
       try {
         await env.DB.prepare(
-          "INSERT INTO teams (id, name, school, slug, motto, description, created_at, recruitment, max_size, captain_user_id, status, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-        ).bind(teamId, teamName, school, slug, motto, description, String(now), String(recruitment), "3", session.userId, "open", String(now)).run();
+          "INSERT INTO teams (id, name, school, created_at) VALUES (?, ?, ?, ?)"
+        ).bind(teamId, teamName, school, now).run();
         await env.DB.prepare(
-          "INSERT INTO team_members (id, team_id, slot_index, name, user_id, is_captain, joined_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
-        ).bind(memberIdNew, teamId, "0", teamName, session.userId, "1", String(now)).run();
+          "UPDATE teams SET slug = ?, motto = ?, description = ?, recruitment = ?, max_size = 3, captain_user_id = ?, status = 'open', updated_at = ? WHERE id = ?"
+        ).bind(slug, motto, description, recruitment, session.userId, now, teamId).run();
+        await env.DB.prepare(
+          "INSERT INTO team_members (id, team_id, slot_index, name, user_id, is_captain, joined_at) VALUES (?, ?, 0, ?, ?, 1, ?)"
+        ).bind(memberIdNew, teamId, teamName, session.userId, now).run();
       } catch (e) { return localJson({ error: "could not create team", message: String(e.message || e) }, 500); }
     } else {
       if (!memberId) return errorResponse("authentication required", 401);
@@ -64,11 +70,14 @@ export const onRequestPost = async (context) => {
       memberIdNew = crypto.randomUUID();
       try {
         await env.DB.prepare(
-          "INSERT INTO teams (id, name, school, slug, motto, description, created_at, recruitment, max_size, captain_user_id, status, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-        ).bind(teamId, teamName, school, slug, motto, description, String(now), String(recruitment), "3", null, "open", String(now)).run();
+          "INSERT INTO teams (id, name, school, created_at) VALUES (?, ?, ?, ?)"
+        ).bind(teamId, teamName, school, now).run();
         await env.DB.prepare(
-          "INSERT INTO team_members (id, team_id, slot_index, name, is_captain, joined_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
-        ).bind(memberIdNew, teamId, "0", teamName, "1", String(now)).run();
+          "UPDATE teams SET slug = ?, motto = ?, description = ?, recruitment = ?, max_size = 3, captain_user_id = NULL, status = 'open', updated_at = ? WHERE id = ?"
+        ).bind(slug, motto, description, recruitment, now, teamId).run();
+        await env.DB.prepare(
+          "INSERT INTO team_members (id, team_id, slot_index, name, is_captain, joined_at) VALUES (?, ?, 0, ?, 1, ?)"
+        ).bind(memberIdNew, teamId, teamName, now).run();
       } catch (e) { return errorResponse("could not create team", 500); }
     }
 
@@ -77,7 +86,7 @@ export const onRequestPost = async (context) => {
     try {
       await env.DB.prepare(
         "INSERT INTO join_codes (code, team_id, expires_at, max_uses, uses_left, created_at) VALUES (?, ?, ?, 2, 2, ?)"
-      ).bind(joinCode, teamId, String(expiresAt), String(now)).run();
+      ).bind(joinCode, teamId, expiresAt, now).run();
     } catch (e) { return errorResponse("could not issue join code", 500); }
 
     const cookie = `ctf_member=${memberIdNew}; Path=/; Max-Age=604800; SameSite=Lax`;
