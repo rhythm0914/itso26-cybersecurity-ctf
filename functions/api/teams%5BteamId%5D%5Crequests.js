@@ -1,0 +1,1 @@
+team = await env.DB.prepare(\"SELECT id, max_size FROM teams WHERE id = ?\").bind(teamId).first();
