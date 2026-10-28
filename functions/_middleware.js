@@ -1,10 +1,14 @@
 /**
  * _middleware.js - CORS + JSON body handling for all API routes.
  * Applied to every request under /api/.
+ *
+ * Cloudflare Pages Functions middleware does NOT use the (context, next)
+ * signature like Workers. onRequest receives only context. Return a Response
+ * to short-circuit, or undefined to let the route handler run.
  */
-export const onRequest = async (context, next) => {
+export const onRequest = async (context) => {
   try {
-    return await handleRequest(context, next);
+    return await handleRequest(context);
   } catch (err) {
     return json({
       error: "middleware threw",
@@ -14,7 +18,7 @@ export const onRequest = async (context, next) => {
   }
 };
 
-async function handleRequest(context, next) {
+async function handleRequest(context) {
   const { request } = context;
   const url = new URL(request.url);
 
@@ -51,19 +55,9 @@ async function handleRequest(context, next) {
     }, 503);
   }
 
-  const res = await next().catch((err) => {
-    return json({
-      error: "route handler threw",
-      message: err.message,
-      stack: err.stack
-    }, 500);
-  });
-
-  // Add CORS headers to every response
-  const headers = new Headers(res.headers);
-  headers.set("Access-Control-Allow-Origin", "*");
-  headers.set("Access-Control-Allow-Headers", "Content-Type");
-  return new Response(res.body, { status: res.status, statusText: res.statusText, headers });
+  // Return undefined to let the route handler run automatically.
+  // Pages Functions invokes the route handler after middleware returns undefined.
+  return undefined;
 }
 
 const json = (body, status = 200) =>
