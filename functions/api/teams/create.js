@@ -2,10 +2,7 @@
  * POST /api/teams/create
  * Body: { name, school, slug?, motto?, description?, recruitment? }
  */
-import {
-  json, errorResponse, cleanString,
-  getSession, getCookie,
-} from "../../_lib.js";
+import { json, errorResponse, cleanString, getSession } from "../../_lib.js";
 
 function getMemberCookie(request) {
   const cookie = request.headers.get("cookie") || "";
@@ -13,80 +10,82 @@ function getMemberCookie(request) {
   return match ? match[1] : null;
 }
 
+function localJson(body, status = 200, extraHeaders = {}) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json", ...extraHeaders },
+  });
+}
+
 export const onRequestPost = async (context) => {
   try {
-    return await handleCreate(context);
+    const { env, request } = context;
+    const session = await getSession(env, request);
+    const memberId = getMemberCookie(request);
+    const now = Date.now();
+
+    let body = {};
+    const ct = request.headers.get("content-type") || "";
+    if (ct.includes("application/json")) {
+      try { body = JSON.parse(await request.text()); } catch { return errorResponse("invalid json body", 400); }
+    }
+
+    const teamName = cleanString(body.name);
+    const school = cleanString(body.school || "");
+    const slug = cleanString(body.slug || slugify(teamName));
+    const motto = cleanString(body.motto || "");
+    const description = cleanString(body.description || "");
+    const recruitment = body.recruitment !== false ? 1 : 0;
+
+    if (!teamName || teamName.length > 60) return errorResponse("team name required (max 60 chars)", 400);
+    if (school.length > 100) return errorResponse("school too long", 400);
+
+    let teamId, memberIdNew;
+
+    if (session) {
+      let existing = await env.DB.prepare("SELECT id FROM team_members WHERE user_id = ? LIMIT 1").bind(session.userId).first();
+      if (existing) return errorResponse("you already belong to a team", 409);
+      existing = await env.DB.prepare("SELECT id FROM teams WHERE lower(slug) = ? LIMIT 1").bind(slug.toLowerCase()).first();
+      if (existing) return errorResponse("team slug already in use", 409);
+
+      teamId = crypto.randomUUID();
+      memberIdNew = crypto.randomUUID();
+      try {
+        await env.DB.prepare(
+          "INSERT INTO teams (id, name, school, slug, motto, description, created_at, recruitment, max_size, captain_user_id, status, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        ).bind(teamId, teamName, school, slug, motto, description, String(now), String(recruitment), "3", session.userId, "open", String(now)).run();
+        await env.DB.prepare(
+          "INSERT INTO team_members (id, team_id, slot_index, name, user_id, is_captain, joined_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
+        ).bind(memberIdNew, teamId, "0", teamName, session.userId, "1", String(now)).run();
+      } catch (e) { return localJson({ error: "could not create team", message: String(e.message || e) }, 500); }
+    } else {
+      if (!memberId) return errorResponse("authentication required", 401);
+      teamId = crypto.randomUUID();
+      memberIdNew = crypto.randomUUID();
+      try {
+        await env.DB.prepare(
+          "INSERT INTO teams (id, name, school, slug, motto, description, created_at, recruitment, max_size, captain_user_id, status, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        ).bind(teamId, teamName, school, slug, motto, description, String(now), String(recruitment), "3", null, "open", String(now)).run();
+        await env.DB.prepare(
+          "INSERT INTO team_members (id, team_id, slot_index, name, is_captain, joined_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
+        ).bind(memberIdNew, teamId, "0", teamName, "1", String(now)).run();
+      } catch (e) { return errorResponse("could not create team", 500); }
+    }
+
+    const joinCode = crypto.randomUUID();
+    const expiresAt = now + 7 * 24 * 3600 * 1000;
+    try {
+      await env.DB.prepare(
+        "INSERT INTO join_codes (code, team_id, expires_at, max_uses, uses_left, created_at) VALUES (?, ?, ?, 2, 2, ?)"
+      ).bind(joinCode, teamId, String(expiresAt), String(now)).run();
+    } catch (e) { return errorResponse("could not issue join code", 500); }
+
+    const cookie = `ctf_member=${memberIdNew}; Path=/; Max-Age=604800; SameSite=Lax`;
+    return localJson({ ok: true, team: { id: teamId, name: teamName, school, slug, motto, description, recruitment: !!recruitment, created_at: now }, member: { id: memberIdNew, slot: 0, name: teamName }, joinCode }, 200, { "Set-Cookie": cookie });
   } catch (e) {
-    return json({ error: "worker exception", message: String(e.message || e), stack: String(e.stack || "").split("\n").slice(0, 5) }, 500);
+    return localJson({ error: "worker exception", message: String(e.message || e), stack: String(e.stack || "").split("\n").slice(0, 5) }, 500);
   }
 };
-
-async function handleCreate(context) {
-  const { env, request } = context;
-  const session = await getSession(env, request);
-  const memberId = getMemberCookie(request);
-  const now = Date.now();
-  const nowStr = String(now);
-
-  let body = {};
-  const ct = request.headers.get("content-type") || "";
-  if (ct.includes("application/json")) {
-    try { body = JSON.parse(await request.text()); } catch { return errorResponse("invalid json body", 400); }
-  }
-
-  const teamName = cleanString(body.name);
-  const school = cleanString(body.school || "");
-  const slug = cleanString(body.slug || slugify(teamName));
-  const motto = cleanString(body.motto || "");
-  const description = cleanString(body.description || "");
-  const recruitment = body.recruitment !== false ? 1 : 0;
-
-  if (!teamName || teamName.length > 60) return errorResponse("team name required (max 60 chars)", 400);
-  if (school.length > 100) return errorResponse("school too long", 400);
-
-  let teamId, memberIdNew;
-
-  if (session) {
-    let existing = await env.DB.prepare("SELECT id FROM team_members WHERE user_id = ? LIMIT 1").bind(session.userId).first();
-    if (existing) return errorResponse("you already belong to a team", 409);
-    existing = await env.DB.prepare("SELECT id FROM teams WHERE lower(slug) = ? LIMIT 1").bind(slug.toLowerCase()).first();
-    if (existing) return errorResponse("team slug already in use", 409);
-
-    teamId = crypto.randomUUID();
-    memberIdNew = crypto.randomUUID();
-    try {
-      await env.DB.prepare(
-        "INSERT INTO teams (id, name, school, slug, motto, description, created_at, recruitment, max_size, captain_user_id, status, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-      ).bind(teamId, teamName, school, slug, motto, description, nowStr, String(recruitment), "3", session.userId, "open", nowStr).run();
-      await env.DB.prepare(
-        "INSERT INTO team_members (id, team_id, slot_index, name, user_id, is_captain, joined_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
-      ).bind(memberIdNew, teamId, "0", teamName, session.userId, "1", nowStr).run();
-    } catch (e) { return json({ error: "could not create team", message: String(e.message || e) }, 500); }
-  } else {
-    if (!memberId) return errorResponse("authentication required", 401);
-    teamId = crypto.randomUUID();
-    memberIdNew = crypto.randomUUID();
-    try {
-      await env.DB.prepare(
-        "INSERT INTO teams (id, name, school, slug, motto, description, created_at, recruitment, max_size, captain_user_id, status, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-      ).bind(teamId, teamName, school, slug, motto, description, nowStr, String(recruitment), "3", null, "open", nowStr).run();
-      await env.DB.prepare(
-        "INSERT INTO team_members (id, team_id, slot_index, name, is_captain, joined_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
-      ).bind(memberIdNew, teamId, "0", teamName, "1", nowStr).run();
-    } catch (e) { return errorResponse("could not create team", 500); }
-  }
-
-  const joinCode = crypto.randomUUID();
-  const expiresAt = now + 7 * 24 * 3600 * 1000;
-  try {
-    await env.DB.prepare(
-      "INSERT INTO join_codes (code, team_id, expires_at, max_uses, uses_left, created_at) VALUES (?, ?, ?, ?, ?, ?)"
-    ).bind(joinCode, teamId, String(expiresAt), "2", "2", nowStr).run();
-  } catch (e) { return errorResponse("could not issue join code", 500); }
-
-  const cookie = `ctf_member=${memberIdNew}; Path=/; Max-Age=604800; SameSite=Lax`;
-  return json({ ok: true, team: { id: teamId, name: teamName, school, slug, motto, description, recruitment: !!recruitment, created_at: now }, member: { id: memberIdNew, slot: 0, name: teamName }, joinCode }, 200, { "Set-Cookie": cookie });
-}
 
 function slugify(s) {
   return String(s || "team").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "team";

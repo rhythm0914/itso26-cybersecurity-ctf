@@ -16,7 +16,6 @@ function getMemberCookieLocal(request) {
 export const onRequestPost = async (context) => {
   const { env, request } = context;
   const session = await getSession(env, request);
-  const memberId = getMemberCookieLocal(request);
   const now = Date.now();
   const nowStr = String(now);
 
@@ -43,7 +42,7 @@ export const onRequestPost = async (context) => {
   try {
     members = await env.DB.prepare("SELECT slot_index FROM team_members WHERE team_id = ? ORDER BY slot_index").bind(teamId).all();
   } catch { return errorResponse("database error", 500); }
-  const taken = new Set((members.results || []).map((m) => m.slot_index));
+  const taken = new Set((members.results || []).map((m) => Number(m.slot_index)));
   let slot = -1;
   for (let s = 1; s <= 2; s++) { if (!taken.has(s)) { slot = s; break; } }
   if (slot === -1) return errorResponse("team is full", 400);
@@ -51,7 +50,7 @@ export const onRequestPost = async (context) => {
   const newMemberId = crypto.randomUUID();
   try {
     await env.DB.prepare("INSERT INTO team_members (id, team_id, slot_index, name, user_id, joined_at) VALUES (?, ?, ?, ?, ?, ?)")
-      .bind(newMemberId, teamId, slot, name, session ? session.userId : null, nowStr).run();
+      .bind(newMemberId, teamId, String(slot), name, session ? session.userId : null, nowStr).run();
     await env.DB.prepare("UPDATE join_codes SET uses_left = uses_left - 1 WHERE code = ?").bind(code).run();
   } catch { return errorResponse("could not join team", 500); }
 
