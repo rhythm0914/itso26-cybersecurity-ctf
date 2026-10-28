@@ -6,7 +6,17 @@
  */
 export const onRequestPost = async (context) => {
   const { env, request } = context;
-  const body = request.body || {};
+  let body = {};
+  if (request.method === "POST") {
+    const ct = request.headers.get("content-type") || "";
+    if (ct.includes("application/json")) {
+      try {
+        body = JSON.parse(await request.text());
+      } catch (e) {
+        return json({ error: "invalid json body" }, 400);
+      }
+    }
+  }
   const teamName = String(body.name || "").trim();
   const school = String(body.school || "").trim();
 

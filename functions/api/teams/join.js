@@ -6,7 +6,17 @@
  */
 export const onRequestPost = async (context) => {
   const { env, request } = context;
-  const body = request.body || {};
+  let body = {};
+  if (request.method === "POST") {
+    const ct = request.headers.get("content-type") || "";
+    if (ct.includes("application/json")) {
+      try {
+        body = JSON.parse(await request.text());
+      } catch (e) {
+        return json({ error: "invalid json body" }, 400);
+      }
+    }
+  }
   const code = String(body.code || "").trim();
   const name = String(body.name || "").trim();
 
