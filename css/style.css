@@ -7,26 +7,44 @@
 
 /* ---------- design tokens ---------- */
 :root {
-  --bg: #0a0a0a;
-  --bg-elevated: #121212;
-  --surface: #171717;
-  --border: #1f1f1f;
-  --border-focus: #2d2d2d;
-  --text: #eaeaea;
-  --text-muted: #8a8a8a;
-  --text-dim: #5a5a5a;
-  --accent: #39ff14;
-  --accent-hover: #4dff33;
-  --accent-dim: #1a7a0a;
-  --danger: #ff4d4d;
-  --danger-dim: #7a1a1a;
-  --warning: #ffb300;
-  --info: #00d4aa;
+  --bg: #fafafa;
+  --bg-elevated: #ffffff;
+  --surface: #f5f5f5;
+  --border: #e0e0e0;
+  --border-focus: #b0b0b0;
+  --text: #1a1a1a;
+  --text-muted: #5a5a5a;
+  --text-dim: #3a3a3a;
+  --accent: #ff6b6b;
+  --accent-hover: #ff8c42;
+  --accent-dim: #a855c7;
+  --danger: #e05d44;
+  --danger-dim: #a63624;
+  --warning: #f6c141;
+  --info: #48dbfb;
   --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   --font: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-  --radius: 4px;
-  --transition: 0.15s ease;
+  --radius: 8px;
+  --transition: 0.2s ease;
 }
+
+/* Light mode override for high contrast */
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f9f9f9;
+    --bg-elevated: #ffffff;
+    --surface: #fafafa;
+    --border: #d0d0d0;
+    --border-focus: #a0a0a0;
+    --text: #111111;
+    --text-muted: #555555;
+    --text-dim: #444444;
+  }
+}
+
+/* ---------- layout tweaks ---------- */
+.wrap { max-width: 1200px; }
+.section__head h2 { font-size: 1.75rem; }
 
 * { box-sizing: border-box; }
 
