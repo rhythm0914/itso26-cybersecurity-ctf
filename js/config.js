@@ -7,7 +7,7 @@ window.CTF_CONFIG = {
   eventName: "IT Skills Olympics 2026",
   categoryName: "Cybersecurity Category",
   subtitle: "Offline practice simulation",
-  salt: "",
+  // Salt lives ONLY on the server (env.CTF_SALT). Never reintroduce it here.
 
   /* ---------------- competition ---------------- */
   durationMinutes: 90,          // 1 hour 30 minutes

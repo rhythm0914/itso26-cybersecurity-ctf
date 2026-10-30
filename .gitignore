@@ -15,3 +15,7 @@ desktop.ini
 # Wrangler local state
 .wrangler/
 wrangler-dev.log
+
+# CTF security - never commit
+tools/generate_files.py
+tools/admin-only/

@@ -221,3 +221,32 @@ export async function audit(env, { actorId, actorUsername, action, targetType, t
     ).bind(crypto.randomUUID(), actorId || null, actorUsername || null, action, targetType || null, targetId || null, JSON.stringify(detail), ip || null, Date.now()).run();
   } catch {}
 }
+
+export function normalizeAnswer(answer, caseSensitive) {
+  let s = String(answer ?? `'').trim();
+  if (!caseSensitive) {
+    const m = s.match(/^CTF\{(.*)\}$/i);
+    if (m) s = m[1];
+    s = s.toLowerCase().replace(/[^a-z0-9]/g, `'');
+  }
+  return s;
+}
+
+export async function sha256Hex(input) {
+  const buf = new TextEncoder().encode(input);
+  const d = await crypto.subtle.digest('SHA-256', buf);
+  const arr = Array.from(new Uint8Array(d));
+  return arr.map(function(b){ return b.toString(16).padStart(2, '0'); }).join(`'');
+}
+
+export async function hashFlag(env, answer, caseSensitive) {
+  if (!env.CTF_SALT) throw new Error('CTF_SALT not configured');
+  return sha256Hex(env.CTF_SALT + '::' + normalizeAnswer(answer, caseSensitive));
+}
+
+export function safeEqual(a, b) {
+  if (a.length !== b.length) return false;
+  let d = 0;
+  for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return d === 0;
+}

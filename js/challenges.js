@@ -15,8 +15,6 @@
  *   description   what the player has to do (plain text, no HTML)
  *   files         downloadable artefacts, relative to the site root
  *   hints         exactly 3 hints, unlocked in order, each one costs points
- *   flagHash      salted SHA-256 of the accepted answer
- *   altHashes     optional extra accepted answers (same hashing scheme)
  *   caseSensitive true = the answer is compared byte for byte
  *   tools         recommended Kali Linux tooling
  *   writeup       step by step solution with the exact commands
@@ -41,8 +39,6 @@ window.CTF_CHALLENGES = [
       { text: "ROT13 shifts letters by 13 places: `echo <text> | tr 'A-Za-z' 'N-ZA-Mn-za-m'` or `rot13 <text>`.", cost: 20 },
       { text: "The decoded and shifted text starts with CTF{ and ends with }.", cost: 20 }
     ],
-    flagHash: "078706d75868791e958b486ba1a988eb8a3249425a08352ca16a18bfc1055872",
-    altHashes: [],
     caseSensitive: true,
     tools: ["base64", "tr", "python3", "cyberchef"],
     writeup:
@@ -77,8 +73,6 @@ window.CTF_CHALLENGES = [
       { text: "Crack it with john: `john --format=raw-md5 --wordlist=files/esp_wordlist.txt files/esp_md5_hashes.txt`. hashcat alternative: `hashcat -m 0 files/esp_md5_hashes.txt files/esp_wordlist.txt`.", cost: 20 },
       { text: "The cracked password is Swordfish - submit it as CTF{Swordfish}.", cost: 20 }
     ],
-    flagHash: "e7b5833b3070dbf550c7754cf04ee541eab33efc406a857383f277f4d89e38dd",
-    altHashes: [],
     caseSensitive: true,
     tools: ["hashid", "john", "hashcat", "md5sum"],
     writeup:
@@ -113,8 +107,6 @@ window.CTF_CHALLENGES = [
       { text: "hashcat alternative for crypt(3) MD5: `hashcat -m 500 -a 0 files/esp_shadow.txt files/esp_passwords.txt`.", cost: 60 },
       { text: "Only the deploy account is crackable with this wordlist - its password becomes the flag.", cost: 60 }
     ],
-    flagHash: "47f936b620d6340a3c10510f03c694e24c822aafa44a1b70ae8347b4813da22c",
-    altHashes: [],
     caseSensitive: true,
     tools: ["john", "hashcat", "unshadow", "chpasswd"],
     writeup:
@@ -147,8 +139,6 @@ window.CTF_CHALLENGES = [
       { text: "XOR with a repeating key: `python3 -c \"d=open('blob.bin','rb').read();k=b'olympics';print(bytes(b^k[i%len(k)] for i,b in enumerate(d)).decode())\"`.", cost: 60 },
       { text: "The plaintext you get is already the flag - do not add another CTF{} wrapper.", cost: 60 }
     ],
-    flagHash: "e3ae77b55ecefe037a7a08b54f393f9f8f7f7d6f73d5ffd0047af22a9b06f943",
-    altHashes: [],
     caseSensitive: true,
     tools: ["xxd", "python3", "openssl", "binwalk"],
     writeup:
@@ -185,8 +175,6 @@ window.CTF_CHALLENGES = [
       { text: "Network = floor(192.168.10.77 / 64) * 64 = 192.168.10.64, broadcast = network + 63 = 192.168.10.127.", cost: 20 },
       { text: "Join the two addresses with a dash: CTF{network-broadcast}.", cost: 20 }
     ],
-    flagHash: "7562715c53b315e3088b1a59db93446b387d682678e33b7c9da2779e2b0620dc",
-    altHashes: [],
     caseSensitive: true,
     tools: ["ipcalc", "ip", "python3", "netstat"],
     writeup:
@@ -221,8 +209,6 @@ window.CTF_CHALLENGES = [
       { text: "The odd one out is the Remote Desktop service on port 3389, reported as ms-wbt-server.", cost: 20 },
       { text: "Submit it in lower case: CTF{ms-wbt-server}.", cost: 20 }
     ],
-    flagHash: "8201457943498940bf6d25ace64cbed388284409584a8984b6595f8d89058a64",
-    altHashes: [],
     caseSensitive: true,
     tools: ["nmap", "grep", "xmlstarlet"],
     writeup:
@@ -253,8 +239,6 @@ window.CTF_CHALLENGES = [
       { text: "Follow the TCP stream of the control channel: `tshark -r files/net_capture_login.pcap -z follow,tcp,ascii,0`.", cost: 60 },
       { text: "The FTP PASS command carries the flag.", cost: 60 }
     ],
-    flagHash: "72d6e10ff11fd5e6c00e15b15a52db4dfac694315ba4c16670f993bd0d8439ce",
-    altHashes: [],
     caseSensitive: true,
     tools: ["wireshark", "tshark", "strings", "tcpflow"],
     writeup:
@@ -286,8 +270,6 @@ window.CTF_CHALLENGES = [
       { text: "The offending rule accepts tcp/3306 from anywhere and its comment names the service.", cost: 60 },
       { text: "Join port and service with an underscore: CTF{port_service}.", cost: 60 }
     ],
-    flagHash: "ebb71c9e1435b8f6a01ee03b5e55c71b9f672db6fddbfe96cc840d4128405f15",
-    altHashes: [],
     caseSensitive: true,
     tools: ["iptables", "nft", "ufw", "grep"],
     writeup:
@@ -317,8 +299,6 @@ window.CTF_CHALLENGES = [
       { text: "Extract the values directly: `tshark -r files/net_dns_exfil.pcap -Y 'dns.qry.type==16' -T fields -e dns.txt`.", cost: 100 },
       { text: "Join the chunks in the order c1, c2, c3, c4 and base64 decode the result.", cost: 100 }
     ],
-    flagHash: "d4dbb6572e16ceda6995dda59015200fe84b320c6bc2ffde21f2b0561e7b1158",
-    altHashes: [],
     caseSensitive: true,
     tools: ["wireshark", "tshark", "dnscat", "python3"],
     writeup:
@@ -354,8 +334,6 @@ window.CTF_CHALLENGES = [
       { text: "Isolate it: `grep 'Accepted password' files/end_auth.log`.", cost: 20 },
       { text: "Combine IP and user name with an underscore: CTF{10.0.0.1_user}.", cost: 20 }
     ],
-    flagHash: "e8b79a334ff2571ef3c02ae61fff3520d357d10c368f35f054bc9c739bd17296",
-    altHashes: [],
     caseSensitive: true,
     tools: ["grep", "awk", "journalctl", "fail2ban"],
     writeup:
@@ -387,8 +365,6 @@ window.CTF_CHALLENGES = [
       { text: "Decode both of them: `echo <blob> | base64 -d`. Only one contains the flag.", cost: 60 },
       { text: "The decoded command comments the flag at the end of the line.", cost: 60 }
     ],
-    flagHash: "d1bba32281f90fedde75deee38bbd1d5ed612aedb4ee1ecb8ada87c9fcddb20b",
-    altHashes: [],
     caseSensitive: true,
     tools: ["base64", "crontab -l", "systemctl", "grep"],
     writeup:
@@ -420,8 +396,6 @@ window.CTF_CHALLENGES = [
       { text: "They come out backwards - use rev: `rev <<< \"$(echo <blob> | base64 -d)\"`.", cost: 100 },
       { text: "The flag is segment A followed by segment B (A first).", cost: 100 }
     ],
-    flagHash: "65decca4777c2361f5e39434f4528cd7f35f53b91f6eec3ff2bd512d605baabb",
-    altHashes: [],
     caseSensitive: true,
     tools: ["base64", "rev", "python3", "strings"],
     writeup:
@@ -456,8 +430,6 @@ window.CTF_CHALLENGES = [
       { text: "`strings files/end_secret.png` shows it too, because the flag is appended after the IEND chunk.", cost: 100 },
       { text: "`binwalk files/end_secret.png` reveals the appended data past the PNG end marker.", cost: 100 }
     ],
-    flagHash: "56af4372bb625b11afc69e1fe66ddb7c30e359f827a3dc8035505a4df2aaf996",
-    altHashes: [],
     caseSensitive: true,
     tools: ["exiftool", "strings", "binwalk", "xxd", "pngcheck"],
     writeup:
@@ -498,8 +470,6 @@ window.CTF_CHALLENGES = [
       { text: "Risk = likelihood x impact. The finance database has the highest business impact (5) even though its CVSS score is lower than the web server's.", cost: 100 },
       { text: "The winner is the finding on 10.10.5.21 - use its CVE identifier (Log4Shell).", cost: 100 }
     ],
-    flagHash: "90b10ab7e29eff047cc497f0bbe0dfe570d0f5b1063571f31a75acdca71ad65e",
-    altHashes: [],
     caseSensitive: true,
     tools: ["csvlook", "grep", "xmllint", "nmap", "python3"],
     writeup:
@@ -540,8 +510,6 @@ window.CTF_CHALLENGES = [
       "words separated by spaces. Case does not matter and the CTF{} wrapper is optional.",
     files: [],
     hints: [],
-    flagHash: "1ff1b2ecf8515dda10f1899ec1f1c188647f7b951ac62c9525c3cbcc8b5ddfc9",
-    altHashes: [
       "3d0841d864b977c16db3860fd0c0a0b7d8df6fc398bb012169667feb706ed74f",
       "4dc41b9c4fd6a6d6d2ef4cb5bc1ae784c3e64b5b42adbb5760abcd601f062197"
     ],
@@ -565,8 +533,6 @@ window.CTF_CHALLENGES = [
       "Which TCP port does SSH use by default? Type the number only.",
     files: [],
     hints: [],
-    flagHash: "11e56af6970c5dc56161f00a3edf8fa4438fbe80f54cab962ab29c468912d157",
-    altHashes: [],
     caseSensitive: false,
     tools: [],
     writeup:
@@ -585,8 +551,6 @@ window.CTF_CHALLENGES = [
       "Which TCP port does HTTPS use by default? Type the number only.",
     files: [],
     hints: [],
-    flagHash: "d27ef95592da497d7c13d9697ce6a966bba08f8e3cfd88c039f8eb6a172f47d3",
-    altHashes: [],
     caseSensitive: false,
     tools: [],
     writeup:
@@ -606,8 +570,6 @@ window.CTF_CHALLENGES = [
       "the CTF{} wrapper is optional.",
     files: [],
     hints: [],
-    flagHash: "7a3cdd6df521811f3360f45ac70ce0d3357762bb277a037ef3acc57046a446c5",
-    altHashes: [
       "a2b011885c459daa478dcc7878b0538fffbd3fdc5c9f772f0ae37ecf786cdda2",
       "e9b8478eec07ccf92454095f79df8cd2d1fa7393708c7ca43defbd918be2fad7",
       "196d726dd7470d9b63452d7e5ea0ebaac62864330c4acfc5e1156e95c3174a87"
@@ -632,8 +594,6 @@ window.CTF_CHALLENGES = [
       "not matter and the CTF{} wrapper is optional.",
     files: [],
     hints: [],
-    flagHash: "559eadf8863a35df4c56d620d43f53553cd02001e30e033913a124963dcd0311",
-    altHashes: [],
     caseSensitive: false,
     tools: [],
     writeup:
@@ -656,8 +616,6 @@ window.CTF_CHALLENGES = [
       "Answer with the single word.",
     files: [],
     hints: [],
-    flagHash: "e26b5c90cbd23f068524dd1c1a0c7a7cf7a23641bd60918383a5cebdfcf0b651",
-    altHashes: [],
     caseSensitive: false,
     tools: [],
     writeup:

@@ -541,76 +541,6 @@
   /* hashing                                                            */
   /* ================================================================== */
 
-  function normalize(answer, caseSensitive) {
-    var text = String(answer == null ? "" : answer).replace(/\s+/g, " ").trim();
-    if (!caseSensitive) {
-      text = text.toLowerCase().replace(/[,.;:!?]/g, " ").replace(/\s+/g, " ").trim();
-    }
-    return text;
-  }
-
-  function toHex(buffer) {
-    var bytes = new Uint8Array(buffer);
-    var out = "";
-    for (var i = 0; i < bytes.length; i++) {
-      out += ("0" + bytes[i].toString(16)).slice(-2);
-    }
-    return out;
-  }
-
-  function utf8(text) {
-    if (typeof TextEncoder !== "undefined") return new TextEncoder().encode(text);
-    return window.sha256Utf8Bytes(text);
-  }
-
-  /* crypto.subtle only exists in secure contexts - plain HTTP on a LAN is not
-     one, therefore the pure JavaScript fallback in js/sha256.js. */
-  function hashText(text) {
-    if (window.crypto && window.crypto.subtle && window.crypto.subtle.digest) {
-      try {
-        return window.crypto.subtle.digest("SHA-256", utf8(text)).then(toHex);
-      } catch (e) {
-        /* fall through to the JS implementation */
-      }
-    }
-    if (typeof window.sha256Hex === "function") {
-      return Promise.resolve(window.sha256Hex(text));
-    }
-    return Promise.reject(new Error("no SHA-256 implementation available"));
-  }
-
-  function hashAnswer(answer, caseSensitive) {
-    return hashText(CFG.salt + "::" + normalize(answer, caseSensitive));
-  }
-
-  function candidateAnswers(input, ch) {
-    var caseSensitive = ch.caseSensitive !== false;
-    var out = [];
-    var plain = normalize(input, caseSensitive);
-    if (plain) out.push(plain);
-    if (!caseSensitive) {
-      var match = /^ctf\{([\s\S]*)\}$/i.exec(plain);
-      if (match) {
-        var inner = normalize(match[1], caseSensitive);
-        if (inner && out.indexOf(inner) === -1) out.push(inner);
-      }
-    }
-    return out;
-  }
-
-  function checkAnswer(ch, input) {
-    var candidates = candidateAnswers(input, ch);
-    if (!candidates.length) return Promise.resolve(false);
-    return Promise.all(candidates.map(function (candidate) {
-      return hashAnswer(candidate, ch.caseSensitive !== false);
-    })).then(function (hashes) {
-      var accepted = [String(ch.flagHash || "").toLowerCase()]
-        .concat((ch.altHashes || []).map(function (h) { return String(h).toLowerCase(); }));
-      return hashes.some(function (hash) {
-        return accepted.indexOf(String(hash).toLowerCase()) !== -1;
-      });
-    });
-  }
 
   /* ================================================================== */
   /* header                                                             */
@@ -1206,10 +1136,13 @@
     var submit = byId("submit-flag");
     if (submit) submit.disabled = true;
 
-    checkAnswer(ch, value).then(function (correct) {
+    apiFetch("/api/solutions", {
+      method: "POST",
+      body: { challengeId: ch.id, answer: value }
+    }).then(function (data) {
       if (submit) submit.disabled = false;
-      if (correct) {
-        var award = awardFor(ch);
+      if (data.correct) {
+        var award = data.pointsAwarded;
         var solvedAt = Date.now();
         state.solved[ch.id] = {
           at: solvedAt,
@@ -1218,7 +1151,6 @@
         };
         state.lastSolveAt = solvedAt;
         saveState();
-        persistSolution(ch.id, award, hintsFor(ch).slice(), attemptsUsed(ch));
         setFeedback("Correct! +" + award + " points added to your score.", "ok");
         var card = qs('[data-challenge="' + ch.id + '"]');
         if (card) {
@@ -1232,37 +1164,22 @@
         renderBoard();
         if (input) input.value = "";
       } else {
-        state.attempts[ch.id] = attemptsUsed(ch) + 1;
-        var left = attemptsLeft(ch);
-        if (left <= 0) {
+        var left = data.attemptsLeft;
+        if (data.locked) {
           if (state.locked.indexOf(ch.id) === -1) state.locked.push(ch.id);
           saveState();
-          setFeedback("Wrong flag - no attempts left. This challenge is now locked.", "error");
+          setFeedback(data.message || "Wrong flag - no attempts left. This challenge is now locked.", "error");
         } else {
           saveState();
-          setFeedback("Wrong flag - " + left + " attempt(s) left.", "error");
+          setFeedback(data.message || "Wrong flag - " + left + " attempt(s) left.", "error");
         }
         renderModalFooter(ch, isSolved(ch), isLocked(ch), over());
         renderBoard();
       }
+      if (input) input.value = "";
     }).catch(function (error) {
       if (submit) submit.disabled = false;
-      setFeedback("Hashing failed: " + error.message, "error");
-    });
-  }
-
-  function persistSolution(challengeId, points, hints, attempts) {
-    if (!state.team || !state.team.id) return;
-    apiFetch("/api/solutions", {
-      method: "POST",
-      body: {
-        challengeId: challengeId,
-        points: points,
-        hintsUsed: hints,
-        attemptsUsed: attempts
-      }
-    }).catch(function () {
-      /* silent; solution already reflected in session state */
+      setFeedback("Submission failed: " + error.message, "error");
     });
   }
 
@@ -1721,3 +1638,4 @@
     reset: resetEverything
   };
 })();
+
