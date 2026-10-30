@@ -223,11 +223,11 @@ export async function audit(env, { actorId, actorUsername, action, targetType, t
 }
 
 export function normalizeAnswer(answer, caseSensitive) {
-  let s = String(answer ?? `'').trim();
+  let s = String(answer ?? '').trim();
   if (!caseSensitive) {
     const m = s.match(/^CTF\{(.*)\}$/i);
     if (m) s = m[1];
-    s = s.toLowerCase().replace(/[^a-z0-9]/g, `'');
+    s = s.toLowerCase().replace(/[^a-z0-9]/g, '');
   }
   return s;
 }
@@ -236,7 +236,7 @@ export async function sha256Hex(input) {
   const buf = new TextEncoder().encode(input);
   const d = await crypto.subtle.digest('SHA-256', buf);
   const arr = Array.from(new Uint8Array(d));
-  return arr.map(function(b){ return b.toString(16).padStart(2, '0'); }).join(`'');
+  return arr.map(function(b){ return b.toString(16).padStart(2, '0');     }).join('');
 }
 
 export async function hashFlag(env, answer, caseSensitive) {
