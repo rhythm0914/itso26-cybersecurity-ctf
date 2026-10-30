@@ -1,0 +1,204 @@
+/* ==========================================================================
+   IT Skills Olympics 2026 — Cybersecurity Category
+   Dark palette with green accent (original HackTheBox-style scheme)
+   ========================================================================== */
+
+/* ---------- design tokens ---------- */
+:root {
+  --bg: #0a0a0a;
+  --bg-elevated: #121212;
+  --surface: #171717;
+  --border: #1f1f1f;
+  --border-focus: #2d2d2d;
+  --text: #eaeaea;
+  --text-muted: #8a8a8a;
+  --text-dim: #5a5a5a;
+  --accent: #39ff14;
+  --accent-hover: #4dff33;
+  --accent-dim: #1a7a0a;
+  --danger: #ff4d4d;
+  --danger-dim: #7a1a1a;
+  --warning: #ffb300;
+  --info: #00d4aa;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  --font: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  --radius: 4px;
+  --transition: 0.15s ease;
+}
+
+/* ---------- reset ---------- */
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+/* ---------- body ---------- */
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- skip link ---------- */
+.skip-link {
+  position: absolute; top: -9999px; left: 0;
+  background: var(--accent); color: #000; padding: 0.5rem 1rem;
+  z-index: 10000; border-radius: var(--radius); font-weight: 700;
+}
+.skip-link:focus { top: 1rem; }
+
+/* ---------- layout ---------- */
+.wrap { max-width: 1180px; margin: 0 auto; padding: 0 1.5rem; }
+.page { padding: 2.5rem 0 4rem; }
+.section { margin-bottom: 3rem; }
+.section__head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
+.section__head h2 { margin: 0; font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; color: var(--text); }
+
+.grid-2 { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
+@media (min-width: 768px) { .grid-2 { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 1024px) { .grid-2 { grid-template-columns: repeat(3, 1fr); } }
+
+/* ---------- panels ---------- */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+}
+.panel--tight { padding: 1rem; }
+
+/* ---------- typography ---------- */
+h1, h2, h3, h4 { margin: 0 0 0.75rem; line-height: 1.25; font-weight: 800; letter-spacing: -0.02em; color: var(--text); }
+h1 { font-size: 2.5rem; }
+h2 { font-size: 1.5rem; }
+h3 { font-size: 1.1rem; }
+p { margin: 0 0 1rem; color: var(--text); }
+.muted { color: var(--text-muted); }
+.small { font-size: 0.875rem; }
+code { font-family: var(--mono); background: #0d0d0d; padding: 0.15rem 0.35rem; border-radius: var(--radius); font-size: 0.875rem; color: var(--accent); border: 1px solid var(--border); }
+pre { font-family: var(--mono); background: #0d0d0d; border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; overflow: auto; color: var(--text); }
+
+/* ---------- topbar ---------- */
+.topbar {
+  background: #0a0a0a;
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 100;
+}
+.topbar__inner { display: flex; align-items: center; justify-content: space-between; }
+.topbar__nav { display: flex; gap: 1rem; }
+.topbar__status { display: flex; align-items: center; gap: 1rem; }
+
+/* ---------- hero ---------- */
+.hero {
+  position: relative;
+  height: 60vh;
+  min-height: 300px;
+  background: linear-gradient(135deg, #0f0f0f 0%, #181818 100%);
+  border-radius: var(--radius);
+  overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+}
+.hero::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(57,255,20,0.15);
+  border-radius: var(--radius);
+  z-index: -1;
+}
+.hero__kicker { color: var(--accent); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem; }
+.hero__kicker span { color: var(--text-dim); }
+.hero h1 { font-size: 2.8rem; margin-bottom: 0.5rem; }
+.hero__lede { color: var(--text-muted); font-size: 1.1rem; max-width: 600px; text-align: center; }
+.button-row { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+
+/* ---------- announcements ---------- */
+.announcement {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background: var(--surface);
+  border-left: 3px solid var(--accent);
+}
+.announcement h3 { margin: 0 0 0.4rem; font-size: 1.05rem; }
+.announcement .meta { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.6rem; }
+.announcement .body { color: var(--text); line-height: 1.5; }
+
+/* ---------- team grid ---------- */
+.team-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+@media (min-width: 640px) { .team-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 800px) { .team-grid { grid-template-columns: repeat(3, 1fr); } }
+.team-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  transition: var(--transition);
+}
+.team-card:hover { background: var(--border); }
+.team-card .name { font-weight: 700; color: var(--text); margin-bottom: 0.25rem; }
+.team-card .role { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.5rem; }
+.team-card .slots { color: var(--text-dim); font-size: 0.85rem; }
+
+/* ---------- scoreboard ---------- */
+.scoreboard th, .scoreboard td {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.scoreboard th { background: var(--border); }
+
+/* ---------- chat ---------- */
+.chat-wrap { display: grid; grid-template-columns: 1fr; gap: 1rem; height: 60vh; }
+@media (min-width: 768px) { .chat-wrap { grid-template-columns: 300px 1fr; } }
+.chat-sidebar {
+  background: #0a0a0a;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  display: flex; flex-direction: column; gap: 0.75rem;
+}
+.chat-messages {
+  background: #0a0a0a;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  overflow-y: auto;
+  display: flex; flex-direction: column; gap: 0.75rem;
+}
+.chat-message {
+  display: flex; gap: 0.75rem; padding: 0.65rem 0.85rem;
+  border-radius: var(--radius); background: var(--surface); border: 1px solid transparent;
+}
+.chat-message.me { background: rgba(57,255,20,0.05); border-color: rgba(57,255,20,0.15); }
+.chat-message .who { font-size: 0.72rem; font-weight: 900; color: var(--accent); font-family: var(--mono); }
+.chat-message .body { flex: 1; font-size: 0.9rem; color: var(--text); margin: 0 0 0.2rem; word-wrap: break-word; }
+.chat-message .time { font-size: 0.7rem; color: var(--text-dim); font-family: var(--mono); }
+.chat-compose { border-top: 1px solid var(--border); padding-top: 0.75rem; display: flex; gap: 0.5rem; }
+.chat-compose input { flex: 1; }
+
+/* ---------- notifications ---------- */
+.notification-item {
+  display: flex; gap: 0.75rem; padding: 0.85rem; border: 1px solid var(--border);
+  border-radius: var(--radius); background: var(--surface); margin-bottom: 0.6rem;
+}
+.notification-item.unread { border-left: 3px solid var(--accent); background: rgba(57,255,20,0.03); }
+.notification-item .type { font-family: var(--mono); font-size: 0.68rem; font-weight: 900; text-transform: uppercase; color: var(--accent); }
+.notification-item .content { flex: 1; }
+.notification-item .title { font-weight: 800; margin: 0 0 0.2rem; }
+.notification-item .body { font-size: 0.85rem; color: var(--text-muted); margin: 0 0 0.4rem; }
+.notification-item .time { font-size: 0.72rem; color: var(--text-dim); font-family: var(--mono); }
+
+/* ---------- footer ---------- */
+.footer { background: #0a0a0a; border-top: 1px solid var(--border); padding: 1.5rem 0; text-align: center; color: var(--text-muted); font-size: 0.875rem; }
+
+/* ---------- responsive adjustments ---------- */
+@media (max-width: 640px) {
+  .hero h1 { font-size: 2rem; }
+  .topbar__inner { flex-direction: column; align-items: stretch; gap: 0.75rem; }
+  .topbar__status { justify-content: center; width: 100%; }
+  .team-card { flex-direction: column; align-items: flex-start; }
+  .topbar__nav { flex-wrap: wrap; justify-content: center; }
+}
+
