@@ -7,7 +7,7 @@
 		{
 			"binding": "DB",
 			"database_name": "itso26-cybersecurity-ctf",
-			"database_id": "26eec0b2-c3f8-4ba8-b004-1d78b2068c07",
+			"database_id": "c3be7281-d46e-45b4-b478-e2f04115538e",
 			"migrations_dir": "migrations"
 		}
 	]
