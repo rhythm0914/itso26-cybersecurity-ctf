@@ -4,4 +4,331 @@
  * password hashing, token generation, audit logging, notification helpers.
  */
 
-export const JSON_HEADERS = { "Content-Type": "application/json" };\n\n/**\n * Fallback CTF salt. The deployed value should come from env.CTF_SALT (a\n * Pages/Workers variable or secret); the fallback keeps `wrangler pages dev`\n * and fresh deployments working without extra setup. The seeded challenge\n * hashes in migrations/007 were generated with this exact string, so changing\n * it requires regenerating the flags.\n */\n\nexport const DEFAULT_CTF_SALT = "itso26-cybersecurity-ctf-v1";\n\nexport function ctfSalt(env) {\n  return (env && env.CTF_SALT) || DEFAULT_CTF_SALT;\n}\n\n\nexport function isSecureRequest(request) {\n  try {\n    const url = new URL(request.url);\n    if (url.protocol === "https:") return true;\n    return (request.headers.get("x-forwarded-proto") || "").split(",")[0].trim() === "https";\n  } catch {\n    return false;\n  }\n}\n\n\nexport function sessionCookie(token, maxAgeSeconds, secure) {\n  if (secure === undefined) secure = isSecureRequest ? false : true;\n  return `cf_session=${token}; Path=/; HttpOnly; ${secure ? "Secure; " : ""}SameSite=Lax; Max-Age=${maxAgeSeconds}`;\n}\n\n\nexport function clearedSessionCookie(secure) {\n  return `cf_session=; Path=/; HttpOnly; ${secure ? "Secure; " : ""}SameSite=Lax; Max-Age=0`;\n}\n\n\nexport function memberCookie(memberId, maxAgeSeconds) {\n  // Not HttpOnly: the offline lobby reads it from the page. It carries no\n  // privilege beyond the team membership it identifies.\n  return `ctf_member=${memberId}; Path=/; ${maxAgeSeconds ? `Max-Age=${maxAgeSeconds}; ` : ""}SameSite=Lax`;\n}\n\n\nexport function json(body, status = 200, headers = {}) {\n  return new Response(JSON.stringify(body), {\n    status,\n    headers: { ...JSON_HEADERS, ...headers },\n  });\n}\n\n\nexport function errorResponse(message, status = 400) {\n  return json({ error: message }, status);\n}\n\n\nexport function getCookie(request, name) {\n  const cookie = request.headers.get("cookie") || "";\n  const match = cookie.match(new RegExp(`(?:^|;\\s*)${name}=([^;]+)`));\n  return match ? match[1] : null;\n}\n\n\nexport function randomToken() {\n  return crypto.randomUUID();\n}\n\n\nexport function now() {\n  return Date.now();\n}\n\n/**\n * PBKDF2-SHA512 password hash, Web Crypto based (Cloudflare Workers supports it).\n * Format: $pbkdf2-sha512$<iterations>$<salt_base64>$<hash_base64>\n */\n\nexport async function hashPassword(password) {\n  const iterations = 100000;\n  const salt = crypto.getRandomValues(new Uint8Array(32));\n  const key = await crypto.subtle.importKey(\n    "raw",\n    new TextEncoder().encode(password),\n    { name: "PBKDF2" },\n    false,\n    ["deriveBits"]\n  );\n  const hash = await crypto.subtle.deriveBits(\n    { name: "PBKDF2", salt, iterations, hash: "SHA-512" },\n    key,\n    512\n  );\n  const enc = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf)));\n  return `$pbkdf2-sha512$${iterations}$${enc(salt)}$${enc(hash)}`;\n}\n\n\nexport async function verifyPassword(password, stored) {\n  const parts = stored.split("$");\n  if (parts.length !== 5 || parts[0] !== "" || parts[1] !== "pbkdf2-sha512") return false;\n  const iterations = Number(parts[2]);\n  const salt = Uint8Array.from(atob(parts[3]), (c) => c.charCodeAt(0));\n  const hashB64 = parts[4];\n  const key = await crypto.subtle.importKey(\n    "raw",\n    new TextEncoder().encode(password),\n    { name: "PBKDF2" },\n    false,\n    ["deriveBits"]\n  );\n  const hash = await crypto.subtle.deriveBits(\n    { name: "PBKDF2", salt, iterations, hash: "SHA-512" },\n    key,\n    512\n  );\n  const enc = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf)));\n  return safeEqual(enc(hash), hashB64);\n}\n\n\nexport function normalizeUsername(s) { return String(s || "").trim().toLowerCase(); }\r\nexport function normalizeEmail(s) { return String(s || "").trim().toLowerCase(); }\r\nexport function isValidEmail(s) { return /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(s); }\n\n/**\n * Rate limit using D1 rate_limits table.\n * Returns true if under limit, false if exceeded.\n */\n\nexport async function rateLimit(env, key, action, limitPerHour = 60) {\n  const startMs = Date.now() - 60 * 60 * 1000;\n  try {\n    const row = await env.DB.prepare(\n      "SELECT COUNT(*) AS c FROM rate_limits WHERE key = ? AND action = ? AND created_at > ?"\n    ).bind(key, action, startMs).first();\n    const count = row ? Number(row.c) : 0;\n    if (count >= limitPerHour) return false;\n    await env.DB.prepare(\n      "INSERT INTO rate_limits (key, action, created_at) VALUES (?, ?, ?)"\n    ).bind(key, action, Date.now()).run();\n    // Best-effort pruning so the table does not grow without bound.\n    if (Math.random() < 0.02) {\n      env.DB.prepare("DELETE FROM rate_limits WHERE created_at < ?"\n        .bind(startMs - 24 * 3600 * 1000)).run().catch(function () {});\n    }\n    return true;\n  } catch (e) {\n    return true; // if table missing, don't block\n  }\n}\n\n/**\n * Server-side email sending via configurable provider.\n * Never pretends if provider missing.\n */\n\nexport async function sendEmail(env, { to, subject, text, html }) {\n  const provider = env.EMAIL_PROVIDER;\n  const apiKey = env.EMAIL_API_KEY;\n  const from = env.EMAIL_FROM || "no-reply@localhost";\n  if (!provider || !apiKey) return { ok: false, error: "email provider not configured" };\n  try {\n    if (provider === "resend") {\n      const res = await fetch("https://api.resend.com/emails", {\n        method: "POST",\n        headers: {\n          Authorization: `Bearer ${apiKey}`,\n          "Content-Type": "application/json",\n        },\n        body: JSON.stringify({ from, to, subject, text, html }),\n      });\n      if (!res.ok) {\r\n        const txt = await res.text();\r\n        return { ok: false, error: `resend error ${res.status}: ${txt}` };\n      }\n      return { ok: true };\n    }\n    if (provider === "sendgrid") {\n      const res = await fetch("https://api.sendgrid.com/v3/mail/send", {\n        method: "POST",\n        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },\n        body: JSON.stringify({\n          personalizations: [{ to: [{ email: to }], subject }],\n          from: { email: from },\n          content: [{ type: "text/html", value: html || text }],\n        }),\n      });\n      if (!res.ok) {\r\n        const txt = await res.text();\r\n        return { ok: false, error: `sendgrid error ${res.status}: ${txt}` };\n      }\n      return { ok: true };\n    }\n    return { ok: false, error: `unknown email provider: ${provider}` };\n  } catch (e) {\r\n    return { ok: false, error: e.message };\r\n  }\n}\n\n\nexport async function getSession(env, request) {\n  const token = getCookie(request, "cf_session");\n  if (!token) return null;\n  const nowMs = Date.now();\n  let row;\n  try {\r\n    row = await env.DB.prepare(\r\n      `SELECT s.id, s.user_id, s.expires_at, u.username, u.email, u.role, u.email_verified, u.created_at`\r\n    ).bind(token, nowMs).first();\r\n  } catch (e) { return null; }\n  if (!row) return null;\n  return {\r\n    sessionId: row.id,\n    userId: row.user_id,\n    username: row.username,\r\n    email: row.email,\n    role: row.role,\n    emailVerified: !!row.email_verified,\r\n    createdAt: row.created_at,\r\n  };\r\n}\n\n\nexport async function createSession(env, userId, opts = {}) {\n  const id = crypto.randomUUID();\n  const nowMs = Date.now();\n  const ttl = Number(opts.ttlMs || 30 * 24 * 3600 * 1000);\n  const expiresAt = nowMs + ttl;\n  try {\r\n    await env.DB.prepare(\r\n      "INSERT INTO sessions (id, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)"\r\n    ).bind(id, userId, nowMs, expiresAt).run();\r\n  } catch (e) { return null; }\n  const cookie = sessionCookie(id, Math.floor(ttl / 1000), opts.secure !== false);\n  return { id, expiresAt, cookie };\r\n}\n\n\nexport async function destroySession(env, request) {\n  const token = getCookie(request, "cf_session");\n  if (token) {\r\n    try { await env.DB.prepare("DELETE FROM sessions WHERE id = ?").bind(token).run(); } catch (e) {}\r\n  }\n  return clearedSessionCookie(isSecureRequest(request));\r\n}\n\n\nexport async function requireAuth(env, request) {\n  const session = await getSession(env, request);\n  if (!session) return { ok: false, error: errorResponse("authentication required", 401) };\n  return { ok: true, session };\n}\n\n\nexport async function requireRole(env, request, allowedRoles) {\n  const resolved = await requireAuth(env, request);\n  if (!resolved.ok) return resolved;\n  if (!allowedRoles.includes(resolved.session.role)) {\n    return { ok: false, error: errorResponse("insufficient permissions", 403) };\n  }\n  return { ok: true, session: resolved.session };\n}\n\n\nexport function cleanString(s) { return String(s || "").trim(); }\n\n/**\n * Audit log helper. Best-effort; never blocks the caller.\n */\n\nexport async function audit(env, { actorId, actorUsername, action, targetType, targetId, detail = {}, ip }) {\n  try {\r\n    await env.DB.prepare(\r\n      `INSERT INTO audit_logs (id, actor_id, actor_username, action, target_type, target_id, detail, ip, created_at)`\r\n    ).bind(crypto.randomUUID(), actorId || null, actorUsername || null, action, targetType || null, targetId || null, JSON.stringify(detail), ip || null, Date.now()).run();\r\n  } catch {}\r\n}\n\n\nexport function normalizeAnswer(answer, caseSensitive) {\n  let s = String(answer ?? '').trim();\n  if (!caseSensitive) {\n    const m = s.match(/^CTF\\{(.*)\\}$/i);\n    if (m) s = m[1];\n    s = s.toLowerCase().replace(/[^a-z0-9]/g, '');\n  }\n  return s;\n}\n\n\nexport async function sha256Hex(input) {\n  const buf = new TextEncoder().encode(input);\n  const d = await crypto.subtle.digest('SHA-256', buf);\n  const arr = Array.from(new Uint8Array(d));\n  return arr.map(function(b){ return b.toString(16).padStart(2, '0');}).join('');\n}\n\n\nexport async function hashFlag(env, answer, caseSensitive) {\n  return sha256Hex(ctfSalt(env) + '::' + normalizeAnswer(answer, caseSensitive));\n}\n\n\nexport function safeEqual(a, b) {\n  a = String(a); b = String(b);\n  if (a.length !== b.length) return false;\n  let d = 0;\n  for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i);\n  return d === 0;\n}\n\n/**\n * Resolve the caller's team membership from either the authenticated session\n * (normal accounts) or the ctf_member cookie (offline lobby). Returns\n * { teamId, member, session } or null. This is the single source of truth used\n * by challenge submission, hints and clock control.\n */\n\nexport async function resolveTeam(env, request) {\n  const session = await getSession(env, request);\n  if (session) {\n    try {\n      const member = await env.DB.prepare(\n        "SELECT id, team_id, slot_index, name, is_captain FROM team_members WHERE user_id = ? ORDER BY joined_at LIMIT 1"\n      ).bind(session.userId).first();\n      if (member) return { teamId: member.team_id, member, session };\n    } catch { /* fall through to the member cookie */ }\n  }\n  const memberId = getCookie(request, "ctf_member");\n  if (!memberId) return null;\n  try {\r\n    const member = await env.DB.prepare(\n      "SELECT id, team_id, slot_index, name, is_captain FROM team_members WHERE id = ?"\r\n    ).bind(memberId).first();\n    if (!member) return null;\n    return { teamId: member.team_id, member, session: null };\n  } catch {\n    return null;\n  }\n}\n\n/** The configured competition length, in milliseconds. */\n\nexport function competitionDuration(env) {\n  return Number(env && env.CTF_DURATION_MINUTES ? env.CTF_DURATION_MINUTES : 90) * 60 * 1000;\n}\n"
+export const JSON_HEADERS = { "Content-Type": "application/json" };
+
+/**
+ * Fallback CTF salt. The deployed value should come from env.CTF_SALT (a
+ * Pages/Workers variable or secret); the fallback keeps `wrangler pages dev`
+ * and fresh deployments working without extra setup. The seeded challenge
+ * hashes in migrations/007 were generated with this exact string, so changing
+ * it requires regenerating the flags.
+ */
+
+export const DEFAULT_CTF_SALT = "itso26-cybersecurity-ctf-v1";
+
+export function ctfSalt(env) {
+  return (env && env.CTF_SALT) || DEFAULT_CTF_SALT;
+}
+
+export function isSecureRequest(request) {
+  try {
+    const url = new URL(request.url);
+    if (url.protocol === "https:") return true;
+    return (request.headers.get("x-forwarded-proto") || "").split(",")[0].trim() === "https";
+  } catch {
+    return false;
+  }
+}
+
+export function sessionCookie(token, maxAgeSeconds, secure) {
+  if (secure === undefined) secure = false;
+  return `cf_session=${token}; Path=/; HttpOnly; ${secure ? "Secure; " : ""}SameSite=Lax; Max-Age=${maxAgeSeconds}`;
+}
+
+export function clearedSessionCookie(secure) {
+  return `cf_session=; Path=/; HttpOnly; ${secure ? "Secure; " : ""}SameSite=Lax; Max-Age=0`;
+}
+
+export function memberCookie(memberId, maxAgeSeconds) {
+  // Not HttpOnly: the offline lobby reads it from the page. It carries no
+  // privilege beyond the team membership it identifies.
+  return `ctf_member=${memberId}; Path=/; ${maxAgeSeconds ? `Max-Age=${maxAgeSeconds}; ` : ""}SameSite=Lax`;
+}
+
+export function json(body, status = 200, headers = {}) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...JSON_HEADERS, ...headers },
+  });
+}
+
+export function errorResponse(message, status = 400) {
+  return json({ error: message }, status);
+}
+
+export function getCookie(request, name) {
+  const cookie = request.headers.get("cookie") || "";
+  const match = cookie.match(new RegExp(`(?:^|;\\s*)${name}=([^;]+)`));
+  return match ? match[1] : null;
+}
+
+export function randomToken() {
+  return crypto.randomUUID();
+}
+
+export function now() {
+  return Date.now();
+}
+
+/**
+ * PBKDF2-SHA512 password hash, Web Crypto based (Cloudflare Workers supports it).
+ * Format: $pbkdf2-sha512$<iterations>$<salt_base64>$<hash_base64>
+ */
+
+export async function hashPassword(password) {
+  const iterations = 100000;
+  const salt = crypto.getRandomValues(new Uint8Array(32));
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(password),
+    { name: "PBKDF2" },
+    false,
+    ["deriveBits"]
+  );
+  const hash = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", salt, iterations, hash: "SHA-512" },
+    key,
+    512
+  );
+  const enc = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf)));
+  return `$pbkdf2-sha512$${iterations}$${enc(salt)}$${enc(hash)}`;
+}
+
+export async function verifyPassword(password, stored) {
+  const parts = stored.split("$");
+  if (parts.length !== 5 || parts[0] !== "" || parts[1] !== "pbkdf2-sha512") return false;
+  const iterations = Number(parts[2]);
+  const salt = Uint8Array.from(atob(parts[3]), (c) => c.charCodeAt(0));
+  const hashB64 = parts[4];
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(password),
+    { name: "PBKDF2" },
+    false,
+    ["deriveBits"]
+  );
+  const hash = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", salt, iterations, hash: "SHA-512" },
+    key,
+    512
+  );
+  const enc = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf)));
+  return safeEqual(enc(hash), hashB64);
+}
+
+export function normalizeUsername(s) { return String(s || "").trim().toLowerCase(); }
+export function normalizeEmail(s) { return String(s || "").trim().toLowerCase(); }
+export function isValidEmail(s) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s); }
+
+/**
+ * Rate limit using D1 rate_limits table.
+ * Returns true if under limit, false if exceeded.
+ */
+
+export async function rateLimit(env, key, action, limitPerHour = 60) {
+  const startMs = Date.now() - 60 * 60 * 1000;
+  try {
+    const row = await env.DB.prepare(
+      "SELECT COUNT(*) AS c FROM rate_limits WHERE key = ? AND action = ? AND created_at > ?"
+    ).bind(key, action, startMs).first();
+    const count = row ? Number(row.c) : 0;
+    if (count >= limitPerHour) return false;
+    await env.DB.prepare(
+      "INSERT INTO rate_limits (key, action, created_at) VALUES (?, ?, ?)"
+    ).bind(key, action, Date.now()).run();
+    // Best-effort pruning so the table does not grow without bound.
+    if (Math.random() < 0.02) {
+      env.DB.prepare("DELETE FROM rate_limits WHERE created_at < ?"
+        .bind(startMs - 24 * 3600 * 1000)).run().catch(function () {});
+    }
+    return true;
+  } catch (e) {
+    return true; // if table missing, don't block
+  }
+}
+
+/**
+ * Server-side email sending via configurable provider.
+ * Never pretends if provider missing.
+ */
+
+export async function sendEmail(env, { to, subject, text, html }) {
+  const provider = env.EMAIL_PROVIDER;
+  const apiKey = env.EMAIL_API_KEY;
+  const from = env.EMAIL_FROM || "no-reply@localhost";
+  if (!provider || !apiKey) return { ok: false, error: "email provider not configured" };
+  try {
+    if (provider === "resend") {
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ from, to, subject, text, html }),
+      });
+      if (!res.ok) {
+        const txt = await res.text();
+        return { ok: false, error: `resend error ${res.status}: ${txt}` };
+      }
+      return { ok: true };
+    }
+    if (provider === "sendgrid") {
+      const res = await fetch("https://api.sendgrid.com/v3/mail/send", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          personalizations: [{ to: [{ email: to }], subject }],
+          from: { email: from },
+          content: [{ type: "text/html", value: html || text }],
+        }),
+      });
+      if (!res.ok) {
+        const txt = await res.text();
+        return { ok: false, error: `sendgrid error ${res.status}: ${txt}` };
+      }
+      return { ok: true };
+    }
+    return { ok: false, error: `unknown email provider: ${provider}` };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+}
+
+export async function getSession(env, request) {
+  const token = getCookie(request, "cf_session");
+  if (!token) return null;
+  const nowMs = Date.now();
+  let row;
+  try {
+    row = await env.DB.prepare(
+      `SELECT s.id, s.user_id, s.expires_at, u.username, u.email, u.role, u.email_verified, u.created_at`
+    ).bind(token, nowMs).first();
+  } catch (e) { return null; }
+  if (!row) return null;
+  return {
+    sessionId: row.id,
+    userId: row.user_id,
+    username: row.username,
+    email: row.email,
+    role: row.role,
+    emailVerified: !!row.email_verified,
+    createdAt: row.created_at,
+  };
+}
+
+export async function createSession(env, userId, opts = {}) {
+  const id = crypto.randomUUID();
+  const nowMs = Date.now();
+  const ttl = Number(opts.ttlMs || 30 * 24 * 3600 * 1000);
+  const expiresAt = nowMs + ttl;
+  try {
+    await env.DB.prepare(
+      "INSERT INTO sessions (id, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)"
+    ).bind(id, userId, nowMs, expiresAt).run();
+  } catch (e) { return null; }
+  const cookie = sessionCookie(id, Math.floor(ttl / 1000), opts.secure !== false);
+  return { id, expiresAt, cookie };
+}
+
+export async function destroySession(env, request) {
+  const token = getCookie(request, "cf_session");
+  if (token) {
+    try { await env.DB.prepare("DELETE FROM sessions WHERE id = ?").bind(token).run(); } catch (e) {}
+  }
+  return clearedSessionCookie(isSecureRequest(request));
+}
+
+export async function requireAuth(env, request) {
+  const session = await getSession(env, request);
+  if (!session) return { ok: false, error: errorResponse("authentication required", 401) };
+  return { ok: true, session };
+}
+
+export async function requireRole(env, request, allowedRoles) {
+  const resolved = await requireAuth(env, request);
+  if (!resolved.ok) return resolved;
+  if (!allowedRoles.includes(resolved.session.role)) {
+    return { ok: false, error: errorResponse("insufficient permissions", 403) };
+  }
+  return { ok: true, session: resolved.session };
+}
+
+export function cleanString(s) { return String(s || "").trim(); }
+
+/**
+ * Audit log helper. Best-effort; never blocks the caller.
+ */
+
+export async function audit(env, { actorId, actorUsername, action, targetType, targetId, detail = {}, ip }) {
+  try {
+    await env.DB.prepare(
+      `INSERT INTO audit_logs (id, actor_id, actor_username, action, target_type, target_id, detail, ip, created_at)`
+    ).bind(crypto.randomUUID(), actorId || null, actorUsername || null, action, targetType || null, targetId || null, JSON.stringify(detail), ip || null, Date.now()).run();
+  } catch {}
+}
+
+export function normalizeAnswer(answer, caseSensitive) {
+  let s = String(answer ?? '').trim();
+  if (!caseSensitive) {
+    const m = s.match(/^CTF\{(.*)\}$/i);
+    if (m) s = m[1];
+    s = s.toLowerCase().replace(/[^a-z0-9]/g, '');
+  }
+  return s;
+}
+
+export async function sha256Hex(input) {
+  const buf = new TextEncoder().encode(input);
+  const d = await crypto.subtle.digest('SHA-256', buf);
+  const arr = Array.from(new Uint8Array(d));
+  return arr.map(function(b){ return b.toString(16).padStart(2, '0');}).join('');
+}
+
+export async function hashFlag(env, answer, caseSensitive) {
+  return sha256Hex(ctfSalt(env) + '::' + normalizeAnswer(answer, caseSensitive));
+}
+
+export function safeEqual(a, b) {
+  a = String(a); b = String(b);
+  if (a.length !== b.length) return false;
+  let d = 0;
+  for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return d === 0;
+}
+
+/**
+ * Resolve the caller's team membership from either the authenticated session
+ * (normal accounts) or the ctf_member cookie (offline lobby). Returns
+ * { teamId, member, session } or null. This is the single source of truth used
+ * by challenge submission, hints and clock control.
+ */
+
+export async function resolveTeam(env, request) {
+  const session = await getSession(env, request);
+  if (session) {
+    try {
+      const member = await env.DB.prepare(
+        "SELECT id, team_id, slot_index, name, is_captain FROM team_members WHERE user_id = ? ORDER BY joined_at LIMIT 1"
+      ).bind(session.userId).first();
+      if (member) return { teamId: member.team_id, member, session };
+    } catch { /* fall through to the member cookie */ }
+  }
+  const memberId = getCookie(request, "ctf_member");
+  if (!memberId) return null;
+  try {
+    const member = await env.DB.prepare(
+      "SELECT id, team_id, slot_index, name, is_captain FROM team_members WHERE id = ?"
+    ).bind(memberId).first();
+    if (!member) return null;
+    return { teamId: member.team_id, member, session: null };
+  } catch {
+    return null;
+  }
+}
+
+/** The configured competition length, in milliseconds. */
+
+export function competitionDuration(env) {
+  return Number(env && env.CTF_DURATION_MINUTES ? env.CTF_DURATION_MINUTES : 90) * 60 * 1000;
+}
