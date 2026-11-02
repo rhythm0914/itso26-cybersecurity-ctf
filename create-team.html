@@ -6,6 +6,17 @@
 <meta name="color-scheme" content="dark">
 <title>Create a team &middot; IT Skills Olympics 2026</title>
 <link rel="stylesheet" href="css/style.css">
+<style>
+  body[data-page="team"]::before { display: none; }
+  .auth-bg {
+    min-height: calc(100vh - 120px);
+    background:
+      radial-gradient(ellipse at 30% 20%, rgba(0, 255, 163, 0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 70% 80%, rgba(124, 92, 255, 0.05) 0%, transparent 50%),
+      var(--bg);
+    padding: 2rem 1rem;
+  }
+</style>
 </head>
 <body data-page="team">
 
@@ -22,37 +33,42 @@
 </header>
 
 <main id="main" class="wrap page">
-  <div class="auth-wrap">
-    <div class="auth-card">
-      <h2>Create a team</h2>
-      <p class="muted small" style="margin-bottom:1.25rem">You will become the team captain. You can invite teammates by sharing the join code.</p>
-      <form id="create-form" novalidate>
-        <div class="field">
-          <label for="team-name">Team name</label>
-          <input type="text" id="team-name" name="teamName" required placeholder="e.g. Null Pointers">
+  <div class="auth-bg">
+    <div class="auth-wrap">
+      <div class="auth-card">
+        <div style="text-align:center;margin-bottom:1.25rem">
+          <span style="font-family:var(--font-mono);font-size:1.75rem;color:var(--accent);text-shadow:0 0 20px var(--accent-glow);display:block;margin-bottom:0.3rem">&#127993;</span>
+          <h2 style="margin:0;font-size:1.35rem">Create a team</h2>
         </div>
-        <div class="field">
-          <label for="team-slug">Team slug (URL identifier)</label>
-          <input type="text" id="team-slug" name="teamSlug" placeholder="auto-generated" maxlength="40">
-          <p class="hint text-muted">Used in the team URL. Leave blank to auto-generate from the name.</p>
-        </div>
-        <div class="field">
-          <label for="school">School / organisation</label>
-          <input type="text" id="school" name="school" placeholder="e.g. Northgate Technical College">
-        </div>
-        <div class="field">
-          <label for="motto">Motto (optional)</label>
-          <input type="text" id="motto" name="motto" placeholder="e.g. Root access only.">
-        </div>
-        <div class="field">
-          <label for="description">Description (optional)</label>
-          <textarea id="description" name="description" rows="3" placeholder="What is your team about?"></textarea>
-        </div>
-        
-        <div class="button-row">
-          <button type="submit" class="btn btn--primary btn--block" id="create-btn">Create team</button>
-        </div>
-      </form>
+        <p class="muted small" style="margin-bottom:1.25rem;text-align:center">You will become the team captain. You can invite teammates by sharing the join code.</p>
+        <form id="create-form" novalidate>
+          <div class="field">
+            <label for="team-name">Team name</label>
+            <input type="text" id="team-name" name="teamName" required placeholder="e.g. Null Pointers">
+          </div>
+          <div class="field">
+            <label for="team-slug">Team slug (URL identifier)</label>
+            <input type="text" id="team-slug" name="teamSlug" placeholder="auto-generated" maxlength="40">
+            <p class="muted small" style="margin:0.1rem 0 0;font-size:0.75rem">Used in the team URL. Leave blank to auto-generate from the name.</p>
+          </div>
+          <div class="field">
+            <label for="school">School / organisation</label>
+            <input type="text" id="school" name="school" placeholder="e.g. Northgate Technical College">
+          </div>
+          <div class="field">
+            <label for="motto">Motto (optional)</label>
+            <input type="text" id="motto" name="motto" placeholder="e.g. Root access only.">
+          </div>
+          <div class="field">
+            <label for="description">Description (optional)</label>
+            <textarea id="description" name="description" rows="3" placeholder="What is your team about?"></textarea>
+          </div>
+
+          <div class="button-row" style="margin-top:0.5rem">
+            <button type="submit" class="btn btn--primary btn--block" id="create-btn">Create team</button>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 </main>
@@ -87,7 +103,6 @@
       school: String(form.elements.school.value || "").trim(),
       motto: String(form.elements.motto.value || "").trim(),
       description: String(form.elements.description.value || "").trim(),
-      
     };
     if (!fields.name) { flash("Team name is required.", "error"); return; }
     btn.disabled = true; btn.textContent = "Creating team…";

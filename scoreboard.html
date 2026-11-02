@@ -7,6 +7,52 @@
 <meta name="color-scheme" content="dark">
 <title>Scoreboard &middot; IT Skills Olympics 2026</title>
 <link rel="stylesheet" href="css/style.css">
+<style>
+  .scoreboard-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .scoreboard-header .muted {
+    font-size: 0.8rem;
+  }
+  .my-scorecard {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  .my-scorecard .stat-card {
+    flex: 1;
+    min-width: 80px;
+    text-align: center;
+    padding: 0.75rem 0.5rem;
+  }
+  .my-scorecard .stat-card__value {
+    font-family: var(--font-mono);
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--accent);
+    display: block;
+    line-height: 1.1;
+  }
+  .my-scorecard .stat-card__label {
+    font-size: 0.68rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+    display: block;
+    margin-top: 0.2rem;
+  }
+  .my-scorecard .stat-card.accent .stat-card__value {
+    color: var(--accent);
+    text-shadow: 0 0 10px var(--accent-glow);
+  }
+</style>
 </head>
 <body data-page="scoreboard">
 
@@ -16,10 +62,7 @@
   <div class="wrap topbar__inner">
     <a class="brand" href="index.html">
       <span class="brand__mark" aria-hidden="true">&gt;_</span>
-      <span class="brand__text">
-        <strong>IT Skills Olympics 2026</strong>
-        <span>Cybersecurity Category</span>
-      </span>
+      <span class="brand__text"><strong>IT Skills Olympics 2026</strong><span>Cybersecurity Category</span></span>
     </a>
     <nav class="topbar__nav" aria-label="Main navigation">
       <a href="index.html">Home</a>
@@ -38,9 +81,12 @@
 <main id="main" class="wrap page">
 
   <section class="section" aria-labelledby="standings-title">
-    <div class="section__head">
-      <h2 id="standings-title">Standings</h2>
-      <span class="muted small">Highest score wins - ties are broken by the earlier last correct submission</span>
+    <div class="scoreboard-header">
+      <div>
+        <h2 id="standings-title">Standings</h2>
+        <p class="muted small">Highest score wins — ties are broken by the earlier last correct submission</p>
+      </div>
+      <span class="pill pill--accent">Live</span>
     </div>
 
     <div class="table-wrap">
@@ -56,7 +102,7 @@
           </tr>
         </thead>
         <tbody id="standings-body">
-          <tr><td colspan="5" class="muted">Loading standings ...</td></tr>
+          <tr><td colspan="5" class="muted">Loading standings …</td></tr>
         </tbody>
       </table>
     </div>
@@ -73,35 +119,35 @@
     </div>
     <div class="grid-2">
       <div class="panel">
-        <div class="stat-grid">
-          <span class="stat-card"><span class="stat-card__value" id="my-rank">-</span><span class="stat-card__label">rank</span></span>
-          <span class="stat-card"><span class="stat-card__value" id="my-score">0</span><span class="stat-card__label">points</span></span>
-          <span class="stat-card"><span class="stat-card__value" id="my-solved">0</span><span class="stat-card__label">solved</span></span>
-          <span class="stat-card"><span class="stat-card__value" id="my-hints">0</span><span class="stat-card__label">hints used</span></span>
-          <span class="stat-card"><span class="stat-card__value" id="my-attempts">0</span><span class="stat-card__label">attempts used</span></span>
-          <span class="stat-card"><span class="stat-card__value" id="my-time">-</span><span class="stat-card__label">time left</span></span>
+        <div class="my-scorecard">
+          <div class="stat-card accent"><span class="stat-card__value" id="my-rank">-</span><span class="stat-card__label">rank</span></div>
+          <div class="stat-card accent"><span class="stat-card__value" id="my-score">0</span><span class="stat-card__label">points</span></div>
+          <div class="stat-card"><span class="stat-card__value" id="my-solved">0</span><span class="stat-card__label">solved</span></div>
+          <div class="stat-card"><span class="stat-card__value" id="my-hints">0</span><span class="stat-card__label">hints used</span></div>
+          <div class="stat-card"><span class="stat-card__value" id="my-attempts">0</span><span class="stat-card__label">attempts used</span></div>
+          <div class="stat-card"><span class="stat-card__value" id="my-time">-</span><span class="stat-card__label">time left</span></div>
         </div>
-        <h3 style="margin-top:1.2rem">Progress per category</h3>
+        <h3 style="margin:1rem 0 0.5rem;font-size:0.95rem">Progress per category</h3>
         <div id="topic-breakdown"></div>
       </div>
 
       <div class="panel">
-        <h3>Progress backup</h3>
-        <p class="muted">
+        <h3 style="margin:0 0 0.5rem;font-size:0.95rem">Progress backup</h3>
+        <p class="muted" style="font-size:0.82rem;line-height:1.55">
           Export writes a JSON file with your team, the clock, every solved challenge, every
           hint and every attempt. Import restores it on another machine or in another browser.
           The <em>Reset everything</em> button appears in practice mode
           (<code>js/config.js</code>: <code>practiceMode: true</code>); in exam simulation mode
           you can still clear the data with the browser's "clear site data" option.
         </p>
-        <div class="button-row">
+        <div class="button-row" style="margin-top:0.75rem">
           <button class="btn btn--primary" type="button" id="export-button">Export progress (JSON)</button>
           <button class="btn" type="button" id="import-button">Import progress (JSON)</button>
           <input type="file" id="import-input" accept="application/json,.json" hidden>
           <button class="btn btn--danger" type="button" id="reset-button" hidden>Reset everything</button>
         </div>
-        <h3 style="margin-top:1.4rem">Published leaderboard</h3>
-        <p class="muted" style="margin-bottom:0">
+        <h3 style="margin:1.2rem 0 0.5rem;font-size:0.95rem">Published leaderboard</h3>
+        <p class="muted" style="font-size:0.8rem;line-height:1.5;margin-bottom:0.4rem">
           The rival teams come from <code>data/scoreboard.json</code>. As the organiser you can
           edit that file by hand (or <code>data/scoreboard.js</code> when the site is opened
           straight from a file, where the browser blocks JSON fetches). Each entry looks like:
@@ -129,7 +175,6 @@
 <div class="page-status" id="page-status" role="status" aria-live="polite" data-visible="false"></div>
 
 <script src="data/scoreboard.js"></script>
-
 <script src="js/config.js"></script>
 <script src="js/challenges.js"></script>
 <script src="js/app.js"></script>

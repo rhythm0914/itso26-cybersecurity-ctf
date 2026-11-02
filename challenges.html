@@ -7,6 +7,55 @@
 <meta name="color-scheme" content="dark">
 <title>Challenge board &middot; IT Skills Olympics 2026</title>
 <link rel="stylesheet" href="css/style.css">
+<style>
+  .board-special {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .board-summary {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+  .board-summary b {
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .board-notice {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.65rem 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius);
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+  }
+  .board-notice[hidden] { display: none; }
+  .board-notice--error {
+    border-color: var(--danger-dim);
+    color: var(--danger);
+    background: var(--danger-dim);
+  }
+  .challenge-grid {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 560px) {
+    .challenge-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (min-width: 800px) {
+    .challenge-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (min-width: 1024px) {
+    .challenge-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+</style>
 </head>
 <body data-page="challenges">
 
@@ -16,10 +65,7 @@
   <div class="wrap topbar__inner">
     <a class="brand" href="index.html">
       <span class="brand__mark" aria-hidden="true">&gt;_</span>
-      <span class="brand__text">
-        <strong>IT Skills Olympics 2026</strong>
-        <span>Cybersecurity Category</span>
-      </span>
+      <span class="brand__text"><strong>IT Skills Olympics 2026</strong><span>Cybersecurity Category</span></span>
     </a>
     <nav class="topbar__nav" aria-label="Main navigation">
       <a href="index.html">Home</a>
@@ -30,7 +76,6 @@
     <div class="topbar__status">
       <span class="pill">Team <b id="hdr-team">not registered</b></span>
       <span class="pill">Score <b id="hdr-score">0</b></span>
-      <span class="pill" id="competition-status">Not started</span>
       <span class="pill pill--timer" data-timer>--:--</span>
     </div>
   </div>
@@ -40,11 +85,16 @@
 
   <section class="section" aria-labelledby="board-title">
     <div class="section__head">
-      <h2 id="board-title">Challenge board</h2>
-      <span class="muted small" id="board-summary">0 / 19 solved - 0 points</span>
+      <div>
+        <h2 id="board-title">Challenge board</h2>
+        <p class="board-summary" id="board-summary">0 / 20 solved &middot; <b>0 points</b></p>
+      </div>
+      <div class="board-special">
+        <span class="pill pill--accent" id="board-state">Locked</span>
+      </div>
     </div>
 
-    <p class="board-notice" id="board-notice" hidden role="status"></p>
+    <div class="board-notice" id="board-notice" hidden role="status"></div>
 
     <div class="filters" role="group" aria-label="Filter challenges">
       <div class="filters__group" role="group" aria-label="Difficulty">
@@ -67,7 +117,7 @@
       </div>
       <div class="filters__search">
         <label for="filter-search" style="margin:0">Search</label>
-        <input type="search" id="filter-search" placeholder="decoding, wireshark, cron ..." aria-label="Search challenges">
+        <input type="search" id="filter-search" placeholder="Search challenges…" aria-label="Search challenges">
       </div>
     </div>
 
@@ -78,15 +128,15 @@
         Register your team and start the competition on the home page to unlock the
         challenge board.
       </p>
-      <a class="btn btn--primary" href="index.html">Go to the home page</a>
+      <a class="btn btn--primary" href="index.html" style="margin-top:0.5rem">Go to the home page</a>
     </div>
 
-    <div id="board" hidden></div>
+    <div class="challenge-grid" id="board" hidden></div>
 
     <div class="note" style="margin-top:1.5rem">
       <strong>Three attempts per challenge.</strong> A wrong flag costs one attempt. After
-      the third wrong attempt the challenge is locked permanently (the lock lives in your
-      browser). Hints unlock in order and every hint deducts points from that challenge.
+      the third wrong attempt the challenge is locked permanently. Hints unlock in order and
+      every hint deducts points from that challenge.
     </div>
   </section>
 
@@ -104,25 +154,21 @@
     <div class="modal__head">
       <div>
         <h2 class="modal__title" id="modal-title">Challenge</h2>
-        <p class="modal__note" id="modal-category" style="margin:0 0 0.4rem"></p>
+        <p class="modal__note" id="modal-category"></p>
         <div class="modal__badges" id="modal-badges"></div>
       </div>
       <button class="modal__close" id="modal-close" type="button" aria-label="Close dialog">&#10005;</button>
     </div>
 
-    <div class="modal__section">
-      <p id="modal-description"></p>
-      <p class="modal__section" id="modal-tools"></p>
-      <p class="modal__reference" id="modal-reference" hidden></p>
-    </div>
+    <div class="modal__body">
+      <div class="modal__section" id="modal-description"></div>
+      <div class="modal__section" id="modal-tools"></div>
+      <div class="modal__reference" id="modal-reference" hidden></div>
 
-    <div class="modal__section" id="modal-files"></div>
+      <div class="modal__files" id="modal-files"></div>
 
-    <div class="modal__section" id="modal-hints"></div>
+      <div class="modal__section" id="modal-hints" style="margin-top:0.75rem"></div>
 
-    <div class="modal__footer">
-      <p class="modal__note" id="modal-meta"></p>
-      <div class="feedback" id="modal-feedback" role="status" aria-live="polite"></div>
       <div class="modal__section">
         <label for="flag-input">Your flag</label>
         <input type="text" id="flag-input" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="CTF{...}">
@@ -131,12 +177,13 @@
         <button class="btn btn--primary" id="submit-flag" type="button">Submit flag</button>
       </div>
       <p class="modal__note" id="modal-note" style="margin-top:0.6rem"></p>
+      <div class="feedback" id="modal-feedback" role="status" aria-live="polite"></div>
+      <p class="modal__note" id="modal-meta" style="margin-top:1rem"></p>
     </div>
   </div>
 </div>
 
 <div class="page-status" id="page-status" role="status" aria-live="polite" data-visible="false"></div>
-
 
 <script src="js/config.js"></script>
 <script src="js/challenges.js"></script>

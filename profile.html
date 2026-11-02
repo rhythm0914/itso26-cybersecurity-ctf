@@ -33,12 +33,12 @@
   <section class="section">
     <div class="section__head"><h2>Account settings</h2></div>
     <div class="grid-2">
-      <div class="auth-card panel">
-        <h3 style="margin-top:0">Your profile</h3>
+      <div class="panel">
+        <h3 style="margin:0 0 0.75rem;font-size:1rem">Your profile</h3>
         <div id="profile-info" class="muted small" style="line-height:1.8">Loading…</div>
       </div>
       <div class="panel">
-        <h3 style="margin-top:0">Change password</h3>
+        <h3 style="margin:0 0 0.75rem;font-size:1rem">Change password</h3>
         <form id="pw-form" novalidate>
           <div class="field">
             <label for="old_password">Current password</label>
@@ -52,7 +52,7 @@
             <label for="confirm">Confirm new password</label>
             <input type="password" id="confirm" name="confirm" required>
           </div>
-          <button type="submit" class="btn btn--primary" id="pw-btn">Update password</button>
+          <button type="submit" class="btn btn--primary" id="pw-btn" style="margin-top:0.25rem">Update password</button>
         </form>
       </div>
     </div>
@@ -94,15 +94,29 @@
       '<div><strong>Email:</strong> '+ esc(user.email) +'</div>' +
       '<div><strong>Role:</strong> '+ esc(user.role) +'</div>' +
       '<div><strong>Email verified:</strong> '+ (user.email_verified ? "Yes" : "No") +'</div>' +
-      '<div><strong>Member since:</strong> '+ new Date(user.created_at || Date.now()).toLocaleDateString() +'</div>' +
+      '<div><strong>Member since:</strong> '+ (user.created_at ? new Date(Number(user.created_at)).toLocaleDateString() : "—") +'</div>' +
       (user.team ? '<div><strong>Team:</strong> '+ esc(user.team.name) +' ('+ (user.members || []).length +'/3 members)</div>' : '<div class="muted"><strong>Team:</strong> none</div>');
   });
 
   document.getElementById("pw-form").addEventListener("submit", function (event) {
     event.preventDefault();
-    // password change isn't a separate endpoint; use reset flow would need token. 
-    // For now, inform user to use forgot password.
-    flash("Use \"Forgot password\" on the sign-in page to change your password.", "info");
+    var form = event.currentTarget;
+    var oldPassword = String(form.elements.old_password.value || "");
+    var newPassword = String(form.elements.new_password.value || "");
+    var confirm = String(form.elements.confirm.value || "");
+    if (!oldPassword) { flash("Enter your current password.", "error"); return; }
+    if (newPassword.length < 8) { flash("The new password must be at least 8 characters.", "error"); return; }
+    if (newPassword !== confirm) { flash("The new passwords do not match.", "error"); return; }
+    var btn = document.getElementById("pw-btn");
+    btn.disabled = true; btn.textContent = "Updating…";
+    window.Auth.changePassword(oldPassword, newPassword).then(function () {
+      btn.disabled = false; btn.textContent = "Update password";
+      form.reset();
+      flash("Password updated. Other sessions were signed out.", "ok");
+    }).catch(function (e) {
+      btn.disabled = false; btn.textContent = "Update password";
+      flash(e.status === 400 ? "Current password is incorrect." : (e.message || "Could not update password."), "error");
+    });
   });
 })();
 </script>

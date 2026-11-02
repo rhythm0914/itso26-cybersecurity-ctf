@@ -6,6 +6,66 @@
 <meta name="color-scheme" content="dark">
 <title>Admin &middot; IT Skills Olympics 2026</title>
 <link rel="stylesheet" href="css/style.css">
+<style>
+  .admin-stats {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1fr 1fr;
+  }
+  @media (min-width: 480px) {
+    .admin-stats { grid-template-columns: repeat(4, 1fr); }
+  }
+  .admin-section {
+    margin-bottom: 2rem;
+  }
+  .admin-section__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .admin-section__head h2 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+  }
+  .admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+  .admin-table th {
+    padding: 0.5rem 0.65rem;
+    text-align: left;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  .admin-table td {
+    padding: 0.5rem 0.65rem;
+    border-bottom: 1px solid var(--border-subtle);
+    color: var(--text-muted);
+    vertical-align: middle;
+  }
+  .admin-table tr:hover td {
+    background: var(--surface-hover);
+  }
+  .admin-table .action-btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+  }
+  .announcements-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+</style>
 </head>
 <body data-page="admin">
 
@@ -32,68 +92,90 @@
 <main id="main" class="wrap page">
   <div class="page-status" id="flash" role="status" aria-live="polite" data-visible="false"></div>
 
-  <section class="section">
-    <div class="section__head"><h2>Organizer dashboard</h2></div>
-    <div class="grid-2">
-      <div class="panel stat-card"><div class="big" id="admin-users">0</div><div class="label">Users</div></div>
-      <div class="panel stat-card"><div class="big" id="admin-teams">0</div><div class="label">Teams</div></div>
-      <div class="panel stat-card"><div class="big" id="admin-requests">0</div><div class="label">Pending requests</div></div>
-      <div class="panel stat-card"><div class="big" id="admin-messages">0</div><div class="label">Chat messages</div></div>
+  <section class="section admin-section">
+    <div class="admin-section__head">
+      <h2>Organizer dashboard</h2>
+    </div>
+    <div class="admin-stats">
+      <div class="panel stat-card">
+        <div class="big" id="admin-users">0</div>
+        <div class="label">Users</div>
+      </div>
+      <div class="panel stat-card">
+        <div class="big" id="admin-teams">0</div>
+        <div class="label">Teams</div>
+      </div>
+      <div class="panel stat-card">
+        <div class="big" id="admin-requests">0</div>
+        <div class="label">Pending requests</div>
+      </div>
+      <div class="panel stat-card">
+        <div class="big" id="admin-messages">0</div>
+        <div class="label">Chat messages</div>
+      </div>
     </div>
   </section>
 
-  <section class="section">
-    <div class="section__head"><h2>Announcements</h2></div>
-    <form id="announce-form" novalidate style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:1rem">
+  <section class="section admin-section">
+    <div class="admin-section__head">
+      <h2>Announcements</h2>
+    </div>
+    <form id="announce-form" novalidate class="admin-form" style="margin-bottom:1rem">
       <input type="text" id="announce-title" placeholder="Title" required maxlength="120" style="flex:1;min-width:180px">
-      <textarea id="announce-body" placeholder="Body" required maxlength="5000" style="flex:2;min-width:260px;height:70px"></textarea>
+      <textarea id="announce-body" placeholder="Body" required maxlength="5000" style="flex:2;min-width:220px;height:64px"></textarea>
       <button type="submit" class="btn btn--primary">Publish</button>
     </form>
-    <div id="announcements-list"></div>
+    <div class="announcements-list" id="announcements-list"></div>
   </section>
 
-  <section class="section">
-    <div class="section__head"><h2>Recent audit log</h2></div>
-    <div id="audit-list" style="max-height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);background:#0c0c0d;padding:0.75rem">
-      <div class="muted small">Loading…</div>
+  <section class="section admin-section">
+    <div class="admin-section__head">
+      <h2>Recent audit log</h2>
+    </div>
+    <div style="max-height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-elevated);padding:0.6rem">
+      <div class="muted small" id="audit-list">Loading…</div>
     </div>
   </section>
 
-  <section class="section">
-    <div class="section__head"><h2>Manage users</h2></div>
+  <section class="section admin-section">
+    <div class="admin-section__head">
+      <h2>Manage users</h2>
+      <button class="btn btn--ghost btn--small" id="refresh-users">Refresh</button>
+    </div>
     <div style="overflow-x:auto">
-      <table style="width:100%;border-collapse:collapse">
+      <table class="admin-table">
         <thead>
           <tr>
-            <th style="padding:0.5rem;text-align:left">Username</th>
-            <th style="padding:0.5rem;text-align:left">Email</th>
-            <th style="padding:0.5rem;text-align:left">Role</th>
-            <th style="padding:0.5rem;text-align:left">Verified</th>
-            <th style="padding:0.5rem;text-align:left">Actions</th>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Verified</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody id="users-table"></tbody>
       </table>
     </div>
-    <button class="btn btn--ghost btn--small" style="margin-top:0.5rem" id="refresh-users">Refresh users</button>
   </section>
 
-  <section class="section">
-    <div class="section__head"><h2>Manage teams</h2></div>
+  <section class="section admin-section">
+    <div class="admin-section__head">
+      <h2>Manage teams</h2>
+      <button class="btn btn--ghost btn--small" id="refresh-teams">Refresh</button>
+    </div>
     <div style="overflow-x:auto">
-      <table style="width:100%;border-collapse:collapse">
+      <table class="admin-table">
         <thead>
           <tr>
-            <th style="padding:0.5rem;text-align:left">Name</th>
-            <th style="padding:0.5rem;text-align:left">School</th>
-            <th style="padding:0.5rem;text-align:left">Members / Max</th>
-            <th style="padding:0.5rem;text-align:left">Actions</th>
+            <th>Name</th>
+            <th>School</th>
+            <th>Members / Max</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody id="teams-table"></tbody>
       </table>
     </div>
-    <button class="btn btn--ghost btn--small" style="margin-top:0.5rem" id="refresh-teams">Refresh teams</button>
   </section>
 
 </main>
@@ -129,16 +211,16 @@
       var users = data.users || [];
       document.getElementById("users-table").innerHTML = users.map(function (u) {
         return "<tr>" +
-          "<td style=\"padding:0.5rem\">" + esc(u.username) + "</td>" +
-          "<td style=\"padding:0.5rem\">" + esc(u.email) + "</td>" +
-          "<td style=\"padding:0.5rem\">" + esc(u.role) + "</td>" +
-          "<td style=\"padding:0.5rem\">" + (u.email_verified ? "Yes" : "No") + "</td>" +
-          "<td style=\"padding:0.5rem;white-space:nowrap\">" +
-            "<button class=\"btn btn--ghost btn--small\" data-edit-user=\"" + esc(u.id) + "\" data-role=\"" + esc(u.role) + "\">Role</button> " +
-            "<button class=\"btn btn--ghost btn--small\" data-delete-user=\"" + esc(u.id) + "\">Delete</button>" +
+          "<td>" + esc(u.username) + "</td>" +
+          "<td>" + esc(u.email) + "</td>" +
+          "<td>" + esc(u.role) + "</td>" +
+          "<td>" + (u.email_verified ? "Yes" : "No") + "</td>" +
+          "<td style='white-space:nowrap'>" +
+            "<button class='btn btn--ghost action-btn' data-edit-user='"+ esc(u.id) +"' data-role='"+ esc(u.role) +"'>Role</button> " +
+            "<button class='btn btn--ghost action-btn' data-delete-user='"+ esc(u.id) +"' style='color:var(--danger);border-color:var(--danger-dim)'>Delete</button>" +
           "</td>" +
         "</tr>";
-      }).join("") || "<tr><td colspan=\"5\" class=\"muted\">No users.</td></tr>";
+      }).join("") || "<tr><td colspan='5' class='muted small' style='padding:1rem'>No users.</td></tr>";
     }).catch(function () { flash("Could not load users.", "error"); });
   }
 
@@ -147,12 +229,12 @@
       var teams = data.teams || [];
       document.getElementById("teams-table").innerHTML = teams.map(function (t) {
         return "<tr>" +
-          "<td style=\"padding:0.5rem\">" + esc(t.name) + "</td>" +
-          "<td style=\"padding:0.5rem\">" + esc(t.school) + "</td>" +
-          "<td style=\"padding:0.5rem\">" + (t.member_count || 0) + " / " + t.max_size + "</td>" +
-          "<td style=\"padding:0.5rem\"><button class=\"btn btn--ghost btn--small\" data-delete-team=\"" + esc(t.id) + "\">Delete</button></td>" +
+          "<td>" + esc(t.name) + "</td>" +
+          "<td>" + esc(t.school) + "</td>" +
+          "<td>" + (t.member_count || 0) + " / " + t.max_size + "</td>" +
+          "<td><button class='btn btn--ghost action-btn' data-delete-team='"+ esc(t.id) +"' style='color:var(--danger);border-color:var(--danger-dim)'>Delete</button></td>" +
         "</tr>";
-      }).join("") || "<tr><td colspan=\"4\" class=\"muted\">No teams.</td></tr>";
+      }).join("") || "<tr><td colspan='4' class='muted small' style='padding:1rem'>No teams.</td></tr>";
     }).catch(function () { flash("Could not load teams.", "error"); });
   }
 
@@ -170,14 +252,14 @@
     window.Auth.adminAudit().then(function (data) {
       var audit = data.audit || [];
       document.getElementById("audit-list").innerHTML = audit.map(function (a) {
-        return "<div style=\"padding:0.5rem 0;border-bottom:1px solid var(--border);font-size:0.85rem\">" +
-          "<div class=\"muted small\" style=\"font-family:var(--mono)\">" + new Date(a.created_at).toLocaleString() + "</div>" +
-          "<div><strong>" + esc(a.actor_username || "system") + "</strong> &middot; <span style=\"color:var(--accent)\">" + esc(a.action) + "</span>" +
+        return "<div style='padding:0.4rem 0;border-bottom:1px solid var(--border-subtle);font-size:0.82rem'>" +
+          "<div class='muted small font-mono' style='font-size:0.7rem;letter-spacing:0.02em'>"+ new Date(a.created_at).toLocaleString() +"</div>" +
+          "<div><strong>"+ esc(a.actor_username || "system") +"</strong> &middot; <span style='color:var(--accent);font-weight:600'>"+ esc(a.action) +"</span>" +
           (a.target_type ? " on " + esc(a.target_type) + " #" + esc(a.target_id) : "") + "</div>" +
         "</div>";
-      }).join("") || "<div class=\"muted small\">No audit events.</div>";
+      }).join("") || "<div class='muted small'>No audit events.</div>";
     }).catch(function () {
-      document.getElementById("audit-list").innerHTML = "<div class=\"muted small\">Audit log unavailable.</div>";
+      document.getElementById("audit-list").innerHTML = "<div class='muted small'>Audit log unavailable.</div>";
     });
   }
 
@@ -185,12 +267,12 @@
     window.Auth.announcements().then(function (data) {
       var list = data.announcements || [];
       document.getElementById("announcements-list").innerHTML = list.map(function (a) {
-        return "<div class=\"announcement panel\" style=\"margin-bottom:0.75rem\">" +
-          "<h3 style=\"margin:0 0 0.25rem\">" + esc(a.title) + "</h3>" +
-          "<div class=\"muted small\">by " + esc(a.author || "organizer") + " &middot; " + new Date(a.created_at).toLocaleString() + "</div>" +
-          "<p style=\"margin:0.5rem 0 0;white-space:pre-wrap\">" + esc(a.body) + "</p>" +
+        return "<div class='announcement' style='margin-bottom:0.5rem'>" +
+          "<h3>"+ esc(a.title) +"</h3>" +
+          "<div class='meta'>by "+ esc(a.author || "organizer") +" &middot; "+ new Date(a.created_at).toLocaleString() +"</div>" +
+          "<p style='margin:0.4rem 0 0;white-space:pre-wrap;font-size:0.85rem'>"+ esc(a.body) +"</p>" +
         "</div>";
-      }).join("") || "<p class=\"muted small\">No announcements yet.</p>";
+      }).join("") || "<p class='muted small'>No announcements yet.</p>";
     }).catch(function () {});
   }
 
@@ -259,9 +341,9 @@
   window.Auth.load().then(function (u) {
     if (!u || (u.role !== "organizer" && u.role !== "admin")) {
       document.getElementById("main").innerHTML =
-        '<div class="auth-card" style="text-align:center;padding:3rem">' +
-        "<h3>Access denied</h3><p class=\"muted\">Organizer or administrator account required.</p>" +
-        '<a href="dashboard.html" class="btn btn--primary">Go to dashboard</a></div>';
+        '<div class="panel" style="text-align:center;padding:3rem">' +
+        "<h3>Access denied</h3><p class='muted'>Organizer or administrator account required.</p>" +
+        '<a href="dashboard.html" class="btn btn--primary" style="margin-top:1rem">Go to dashboard</a></div>';
       return;
     }
     loadStats();

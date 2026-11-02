@@ -7,6 +7,154 @@
 <meta name="color-scheme" content="dark">
 <title>IT Skills Olympics 2026 &middot; Cybersecurity Category</title>
 <link rel="stylesheet" href="css/style.css">
+<style>
+  .hero {
+    background: linear-gradient(135deg, #05070a 0%, #0a1424 50%, #05070a 100%);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: 3rem 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(0, 255, 163, 0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(124, 92, 255, 0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 80%, rgba(0, 255, 163, 0.04) 0%, transparent 40%);
+    pointer-events: none;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 40px,
+        rgba(0, 255, 163, 0.02) 40px,
+        rgba(0, 255, 163, 0.02) 41px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 40px,
+        rgba(0, 255, 163, 0.02) 40px,
+        rgba(0, 255, 163, 0.02) 41px
+      );
+    pointer-events: none;
+  }
+  .hero__content {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+  .hero__kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.8rem;
+    background: var(--accent-subtle);
+    border: 1px solid var(--accent-dim);
+    border-radius: var(--radius-pill);
+    color: var(--accent);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-family: var(--font-mono);
+    margin-bottom: 1.5rem;
+    box-shadow: 0 0 20px var(--accent-glow);
+  }
+  .hero h1 {
+    font-size: 3rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    margin: 0 0 1rem;
+    background: linear-gradient(135deg, var(--text) 0%, var(--text-muted) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero__lede {
+    font-size: 1.05rem;
+    color: var(--text-muted);
+    line-height: 1.65;
+    max-width: 560px;
+    margin: 0 auto 2rem;
+  }
+  .hero__features {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    margin-top: 2rem;
+    text-align: left;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  @media (min-width: 560px) {
+    .hero__features {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  .hero__feature {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: rgba(0, 255, 163, 0.03);
+    border: 1px solid var(--accent-dim);
+    border-radius: var(--radius-lg);
+    transition: all var(--transition);
+  }
+  .hero__feature:hover {
+    background: rgba(0, 255, 163, 0.06);
+    border-color: var(--accent);
+    transform: translateY(-1px);
+    box-shadow: 0 0 15px var(--accent-glow);
+  }
+  .hero__feature-icon {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-subtle);
+    border-radius: var(--radius);
+    border: 1px solid var(--accent-dim);
+  }
+  .hero__feature strong {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--text);
+    margin-bottom: 0.15rem;
+  }
+  .hero__feature span {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+  }
+  @media (max-width: 640px) {
+    .hero { padding: 2rem 1rem; }
+    .hero h1 { font-size: 2rem; }
+    .hero__lede { font-size: 0.95rem; }
+  }
+</style>
 </head>
 <body data-page="home">
 
@@ -29,41 +177,46 @@
 <main id="main" class="wrap page">
 
   <section class="hero">
-    <p class="hero__kicker">IT Skills Olympics 2026</p>
-    <h1>Cybersecurity Category CTF</h1>
-    <p class="hero__lede">
-      A team-based capture-the-flag platform. Register an account, build or join a
-      team of three, solve 19 graded challenges across four official areas, and climb
-      the scoreboard before the 90-minute clock runs out.
-    </p>
-    <div class="button-row" id="hero-cta"></div>
-  </section>
-
-  <section class="section" aria-labelledby="features-title">
-    <div class="section__head"><h2 id="features-title">How it works</h2></div>
-    <div class="grid-2">
-      <div class="panel">
-        <h3>1. Create an account</h3>
-        <p>Sign up with a username, email and password. Verify your email to unlock team features.</p>
-      </div>
-      <div class="panel">
-        <h3>2. Build or join a team</h3>
-        <p>Create a team and share the invite code, or search teams and submit a join request. Captains approve or reject requests.</p>
-      </div>
-      <div class="panel">
-        <h3>3. Solve challenges</h3>
-        <p>Work through 19 graded challenges with hints, attempts and a live scoreboard. Real-time team chat keeps you coordinated.</p>
-      </div>
-      <div class="panel">
-        <h3>4. Compete</h3>
-        <p>The captain starts the 90-minute clock. Highest score wins; ties broken by earliest last solve.</p>
+    <div class="hero__content">
+      <p class="hero__kicker">IT Skills Olympics 2026 &middot; Cybersecurity</p>
+      <h1>Capture the Flag</h1>
+      <p class="hero__lede">
+        A team-based CTF platform. Register an account, build or join a team of three,
+        solve 20 graded challenges across multiple domains, and climb the scoreboard
+        before the competition clock runs out.
+      </p>
+      <div class="button-row" id="hero-cta"></div>
+      <div class="hero__features">
+        <div class="hero__feature">
+          <div class="hero__feature-icon">&#9998;</div>
+          <div>
+            <strong>Create an account</strong>
+            <span>Sign up with username, email and password.</span>
+          </div>
+        </div>
+        <div class="hero__feature">
+          <div class="hero__feature-icon">&#127993;</div>
+          <div>
+            <strong>Build or join a team</strong>
+            <span>Create a team or find one and submit a join request.</span>
+          </div>
+        </div>
+        <div class="hero__feature">
+          <div class="hero__feature-icon">&#128266;</div>
+          <div>
+            <strong>Solve challenges</strong>
+            <span>Work through graded challenges with hints and a live scoreboard.</span>
+          </div>
+        </div>
+        <div class="hero__feature">
+          <div class="hero__feature-icon">&#128250;</div>
+          <div>
+            <strong>Compete in real time</strong>
+            <span>90-minute clock. Highest score wins; ties broken by last solve time.</span>
+          </div>
+        </div>
       </div>
     </div>
-  </section>
-
-  <section class="section" aria-labelledby="announcements-title">
-    <div class="section__head"><h2 id="announcements-title">Announcements</h2></div>
-    <div id="announcements-list" class="grid-2"></div>
   </section>
 
 </main>
@@ -87,19 +240,17 @@
   var authBox = document.getElementById("topbar-auth");
   var footerAuth = document.getElementById("footer-auth");
   var heroCta = document.getElementById("hero-cta");
-  var announcementsList = document.getElementById("announcements-list");
 
   function renderNav(user) {
     if (!user) {
       nav.innerHTML =
         '<a href="login.html">Sign in</a>' +
-        '<a href="signup.html" class="btn btn--primary" style="margin-left:0.5rem;padding:0.4rem 0.9rem">Sign up</a>';
+        '<a href="signup.html" class="btn btn--primary" style="margin-left:0.5rem">Sign up</a>';
       authBox.innerHTML = '<span class="pill">Not signed in</span>';
-      footerAuth.innerHTML = '<a href="login.html">Sign in</a> &middot; <a href="signup.html">Create account</a>';
       heroCta.innerHTML =
         '<a href="signup.html" class="btn btn--primary">Create account</a>' +
         '<a href="login.html" class="btn btn--ghost">Sign in</a>' +
-        '<a href="challenges.html" class="btn btn--ghost">Challenge board</a>';
+        '<a href="challenges.html" class="btn btn--ghost" style="margin-left:0.5rem">Challenge board</a>';
     } else {
       nav.innerHTML =
         '<a href="dashboard.html">Dashboard</a>' +
@@ -108,11 +259,10 @@
         '<a href="scoreboard.html">Scoreboard</a>' +
         '<a href="profile.html" style="margin-left:0.5rem">'+ esc(user.username) +'</a>' +
         '<button class="btn btn--ghost" id="logout-btn" style="margin-left:0.5rem">Sign out</button>';
-      authBox.innerHTML = '<span class="pill">'+ esc(user.username) +'</span>';
-      footerAuth.innerHTML = '<a href="dashboard.html">Dashboard</a> &middot; <button id="footer-logout" style="background:none;border:none;color:inherit;cursor:pointer;padding:0;font:inherit">Sign out</button>';
+      authBox.innerHTML = '<span class="pill pill--accent">'+ esc(user.username) +'</span>';
       heroCta.innerHTML =
         '<a href="dashboard.html" class="btn btn--primary">Go to dashboard</a>' +
-        '<a href="teams.html" class="btn btn--ghost">Teams</a>';
+        '<a href="challenges.html" class="btn btn--ghost" style="margin-left:0.5rem">Challenges</a>';
     }
   }
 
@@ -125,20 +275,6 @@
     setTimeout(function () { box.setAttribute("data-visible", "false"); }, 5000);
   }
 
-  function loadAnnouncements() {
-    window.Auth.announcements().then(function (data) {
-      var list = data.announcements || [];
-      if (!list.length) { announcementsList.innerHTML = '<p class="muted">No announcements.</p>'; return; }
-      announcementsList.innerHTML = list.map(function (a) {
-        return '<div class="announcement">' +
-          '<h3>' + esc(a.title) + '</h3>' +
-          '<div class="meta">by '+ esc(a.author_username) +' &middot; '+ new Date(a.created_at).toLocaleString() +'</div>' +
-          '<div class="body">'+ esc(a.body) +'</div>' +
-          '</div>';
-      }).join("");
-    }).catch(function () { announcementsList.innerHTML = '<p class="muted">Announcements unavailable.</p>'; });
-  }
-
   function onLogout(btn) {
     if (!btn) return;
     btn.addEventListener("click", function () {
@@ -148,12 +284,12 @@
 
   window.Auth.load().then(function (user) {
     renderNav(user);
-    loadAnnouncements();
-    onLogout(document.getElementById("logout-btn"));
-    onLogout(document.getElementById("footer-logout"));
     if (user) {
-      // logged in: go to dashboard
       location.replace("dashboard.html");
+    } else {
+      heroCta.innerHTML =
+        heroCta.innerHTML + // keep the signup/signin buttons
+        '<span class="pill" style="margin-top:1rem">New to CTF? <a href="signup.html">Create an account</a></span>';
     }
   });
 })();

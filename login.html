@@ -6,6 +6,19 @@
 <meta name="color-scheme" content="dark">
 <title>Sign in &middot; IT Skills Olympics 2026</title>
 <link rel="stylesheet" href="css/style.css">
+<style>
+  body[data-page="auth"]::before {
+    display: none;
+  }
+  .auth-bg {
+    min-height: calc(100vh - 120px);
+    background:
+      radial-gradient(ellipse at 30% 20%, rgba(0, 255, 163, 0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 70% 80%, rgba(124, 92, 255, 0.05) 0%, transparent 50%),
+      var(--bg);
+    padding: 2rem 1rem;
+  }
+</style>
 </head>
 <body data-page="auth">
 
@@ -22,28 +35,38 @@
 </header>
 
 <main id="main" class="wrap page">
-  <div class="auth-wrap">
-    <div class="auth-card">
-      <h2>Sign in</h2>
-      <form id="login-form" novalidate>
-        <div class="field">
-          <label for="email">Email address</label>
-          <input type="email" id="email" name="email" required placeholder="you@example.com">
+  <div class="auth-bg">
+    <div class="auth-wrap">
+      <div class="auth-card">
+        <div style="text-align:center;margin-bottom:1.5rem">
+          <span style="font-family:var(--font-mono);font-size:2rem;color:var(--accent);text-shadow:0 0 20px var(--accent-glow);display:block;margin-bottom:0.5rem">&gt;_</span>
+          <h2 style="margin:0;font-size:1.4rem">Sign in to your account</h2>
         </div>
-        <div class="field">
-          <label for="password">Password</label>
-          <input type="password" id="password" name="password" required placeholder="&#x25cf;&#x25cf;&#x25cf;&#x25cf;&#x25cf;&#x25cf;&#x25cf;&#x25cf;">
-        </div>
-        <div class="button-row">
-          <button type="submit" class="btn btn--primary btn--block" id="login-btn">Sign in</button>
-        </div>
-        <p class="muted small" style="text-align:center;margin-top:0.75rem">
-          Don't have an account? <a href="signup.html">Create one</a>.
-        </p>
-        <p class="muted small" style="text-align:center;margin-top:0.5rem">
-          Forgot your password? <a href="forgot-password.html">Reset it</a>.
-        </p>
-      </form>
+        <form id="login-form" novalidate>
+          <div class="field">
+            <label for="email">Email address</label>
+            <input type="email" id="email" name="email" required placeholder="you@example.com" autocomplete="email">
+          </div>
+          <div class="field">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required placeholder="Your password" autocomplete="current-password">
+          </div>
+          <div class="button-row" style="margin-top:0.5rem">
+            <button type="submit" class="btn btn--primary btn--block" id="login-btn">Sign in</button>
+          </div>
+          <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border-subtle);text-align:center">
+            <p class="muted small" style="margin:0 0 0.4rem">
+              Don't have an account? <a href="signup.html">Create one</a>.
+            </p>
+            <p class="muted small" style="margin:0 0 0.4rem">
+              Forgot your password? <a href="forgot-password.html">Reset it</a>.
+            </p>
+            <p class="muted small" style="margin:0">
+              <a href="index.html">&larr; Back to home</a>
+            </p>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 </main>

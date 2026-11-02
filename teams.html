@@ -6,6 +6,78 @@
 <meta name="color-scheme" content="dark">
 <title>Teams &middot; IT Skills Olympics 2026</title>
 <link rel="stylesheet" href="css/style.css">
+<style>
+  .teams-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+  .teams-page-header .pill {
+    font-size: 0.8rem;
+  }
+  .teams-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 560px) {
+    .teams-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (min-width: 800px) {
+    .teams-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (min-width: 1024px) {
+    .teams-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+  .team-card {
+    background: var(--surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 1.1rem;
+    transition: all var(--transition);
+    cursor: pointer;
+  }
+  .team-card:hover {
+    border-color: var(--accent-dim);
+    background: var(--surface-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+  }
+  .team-card__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+  }
+  .team-card__name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0 0 0.2rem;
+  }
+  .team-card__topic {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin: 0 0 0.3rem;
+  }
+  .team-card__meta {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin: 0 0 0.4rem;
+  }
+  .team-card__status {
+    font-size: 0.72rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+  .team-card__status--open { color: var(--success); }
+  .team-card__status--closed { color: var(--text-dim); }
+</style>
 </head>
 <body data-page="teams">
 
@@ -34,32 +106,32 @@
   <section class="section">
     <div class="section__head">
       <h2>Find a team</h2>
+      <span class="pill" id="team-count">0 teams</span>
     </div>
+
     <div class="filters" role="group" aria-label="Team filters">
-      <input type="search" id="team-search" placeholder="Search team name…" aria-label="Search teams">
+      <input type="search" id="team-search" placeholder="Search team name…" aria-label="Search teams" style="max-width:250px">
       <label style="display:flex;align-items:center;gap:0.4rem;margin:0">
         <input type="checkbox" id="filter-recruiting" style="width:auto"> Recruiting only
       </label>
-      <div style="margin-left:auto">
-        <span class="pill" id="team-count">0 teams</span>
-      </div>
     </div>
-    <div id="teams-grid" class="card-grid"></div>
+
+    <div class="teams-grid" id="teams-grid"></div>
   </section>
 
   <section class="section" aria-labelledby="my-team-title">
     <div class="section__head"><h2 id="my-team-title">My team &amp; join requests</h2></div>
     <div id="my-team-box" class="panel" hidden>
-      <h3 style="margin-top:0">Current team</h3>
-      <div id="my-team-detail" class="muted small"></div>
-      <div class="button-row" style="margin-top:0.75rem">
+      <h3 style="margin-top:0;font-size:0.95rem">Current team</h3>
+      <div id="my-team-detail" class="muted small" style="margin-bottom:0.75rem"></div>
+      <div class="button-row">
         <button class="btn btn--primary" id="btn-view-my-team">View team</button>
         <button class="btn btn--ghost" id="btn-leave-my-team">Leave team</button>
       </div>
     </div>
     <div id="my-requests-box" class="panel" style="margin-top:1rem">
-      <h3 style="margin-top:0">Join requests for my team</h3>
-      <div id="my-requests-list" style="max-height:260px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);background:#0c0c0d;padding:0.75rem">
+      <h3 style="margin-top:0;font-size:0.95rem">Join requests for my team</h3>
+      <div id="my-requests-list" style="max-height:260px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-elevated);padding:0.6rem">
         <div class="muted small">Loading…</div>
       </div>
     </div>
@@ -102,16 +174,18 @@
         if (recruitingOnly && !recruiting) return;
         if (search && t.name.toLowerCase().indexOf(search) === -1) return;
         shown++;
-        html += '<article class="card" data-team-id="' + esc(t.id) + '" style="cursor:pointer" tabindex="0" role="button">' +
-          '<div class="card__top">' +
-          '<span class="badge ' + (recruiting ? 'badge--solved' : 'badge--locked') + '">' + (recruiting ? 'recruiting' : 'closed') + '</span>' +
-          '<span class="card__points">' + t.available_slots + '/' + t.max_size + ' slots</span>' +
+        var statusClass = (t.available_slots > 0 && recruiting) ? "team-card__status--open" : "team-card__status--closed";
+        var joinStatus = (t.available_slots > 0 && recruiting) ? "Open" : "Not accepting";
+        var joinIcon = (t.available_slots > 0 && recruiting) ? "&#9679;" : "&#128274;";
+        html += '<article class="team-card" data-team-id="'+ esc(t.id) +'" style="cursor:pointer" tabindex="0" role="button">' +
+          '<div class="team-card__top">' +
+            '<span class="badge ' + (recruiting ? "badge--solved" : "badge--locked") + '">' + (recruiting ? "recruiting" : "closed") + '</span>' +
+            '<span class="team-card__meta" style="margin:0;font-family:var(--font-mono);font-size:0.7rem">' + t.available_slots + '/' + t.max_size + ' slots</span>' +
           '</div>' +
-          '<h3 class="card__title">' + esc(t.name) + '</h3>' +
-          '<p class="card__topic">' + (t.school ? esc(t.school) : 'no school') + (t.captain ? ' &middot; captain: ' + esc(t.captain) : '') + '</p>' +
-          '<p class="card__meta">' + t.member_count + ' member' + (t.member_count !== 1 ? 's' : '') + (t.my_team ? ' &middot; your team' : '') + '</p>' +
-          '<p class="card__status card__status--' + (t.available_slots > 0 && recruiting ? 'open' : 'locked') + '">' +
-          (t.available_slots > 0 && recruiting ? '&#9679; Open' : '&#128274; Not accepting') + '</p>' +
+          '<h3 class="team-card__name">'+ esc(t.name) +'</h3>' +
+          '<p class="team-card__topic">' + (t.school ? esc(t.school) : "no school") + (t.captain ? ' &middot; captain: ' + esc(t.captain) : '') + '</p>' +
+          '<p class="team-card__meta">'+ t.member_count +' member' + (t.member_count !== 1 ? 's' : '') + (t.my_team ? ' &middot; your team' : '') + '</p>' +
+          '<div class="team-card__status '+ statusClass +'">'+ joinIcon +' '+ joinStatus +'</div>' +
           '</article>';
       });
       if (!html) html = '<p class="empty-state">No teams match your search.</p>';
@@ -139,7 +213,6 @@
           }).catch(function (e) { flash(e.message || "Could not leave team.", "error"); });
         };
       }
-      // pending join requests are only visible to the captain/organizers
       (function () {
         if (!user || !user.team) { reqList.innerHTML = '<div class="muted small">No team.</div>'; return; }
         var isCaptain = !!(user.member && (user.member.slot === 0 || user.member.is_captain));
@@ -148,12 +221,12 @@
           var reqs = data.requests || [];
           if (!reqs.length) { reqList.innerHTML = '<div class="muted small">No pending requests.</div>'; return; }
           reqList.innerHTML = reqs.map(function (r) {
-            return '<div class="notification-item unread" style="margin-bottom:0.5rem">' +
+            return '<div class="notification-item unread" style="margin-bottom:0.4rem">' +
               '<div class="content">' +
               '<div class="title">'+ esc(r.requester.username) +' wants to join</div>' +
-              '<div class="body">'+ esc(r.message || '(no message)') +'</div>' +
+              '<div class="body">'+ esc(r.message || "(no message)") +'</div>' +
               '</div>' +
-              '<div style="display:flex;gap:0.4rem">' +
+              '<div style="display:flex;gap:0.4rem;margin-top:0.4rem">' +
               '<button class="btn btn--primary btn--small" onclick="approveReq(\''+ esc(r.id) +'\')">Approve</button>' +
               '<button class="btn btn--ghost btn--small" onclick="rejectReq(\''+ esc(r.id) +'\')">Reject</button>' +
               '</div>' +

@@ -6,6 +6,60 @@
 <meta name="color-scheme" content="dark">
 <title>Dashboard &middot; IT Skills Olympics 2026</title>
 <link rel="stylesheet" href="css/style.css">
+<style>
+  .dash-stats {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1fr 1fr;
+  }
+  @media (min-width: 480px) {
+    .dash-stats { grid-template-columns: repeat(4, 1fr); }
+  }
+  .dash-stat {
+    text-align: center;
+    padding: 1.25rem 1rem;
+  }
+  .dash-stat__value {
+    font-family: var(--font-mono);
+    font-size: 1.8rem;
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+  }
+  .dash-stat__value.accent {
+    color: var(--accent);
+    text-shadow: 0 0 15px var(--accent-glow);
+  }
+  .dash-stat__value.warning {
+    color: var(--warning);
+  }
+  .dash-stat__value.info {
+    color: var(--info);
+  }
+  .dash-stat__label {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+    margin-top: 0.25rem;
+  }
+  .team-card__info h3 {
+    margin: 0 0 0.3rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+  .team-card__meta {
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    margin: 0 0 1rem;
+  }
+  .team-card__actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+</style>
 </head>
 <body data-page="dashboard">
 
@@ -38,38 +92,38 @@
     <div class="section__head">
       <h2>Dashboard <span id="dash-welcome" class="muted small"></span></h2>
     </div>
-    <div class="grid-2">
-      <div class="panel stat-card">
-        <div class="big" id="dash-score">0</div>
-        <div class="label">Team score</div>
+    <div class="dash-stats">
+      <div class="panel dash-stat">
+        <div class="dash-stat__value accent" id="dash-score">0</div>
+        <div class="dash-stat__label">Team score</div>
       </div>
-      <div class="panel stat-card">
-        <div class="big" id="dash-solved">0</div>
-        <div class="label">Challenges solved</div>
+      <div class="panel dash-stat">
+        <div class="dash-stat__value accent" id="dash-solved">0</div>
+        <div class="dash-stat__label">Challenges solved</div>
       </div>
-      <div class="panel stat-card">
-        <div class="big" id="dash-rank">—</div>
-        <div class="label">Leaderboard rank</div>
+      <div class="panel dash-stat">
+        <div class="dash-stat__value info" id="dash-rank">—</div>
+        <div class="dash-stat__label">Leaderboard rank</div>
       </div>
-      <div class="panel stat-card">
-        <div class="big" id="dash-clock">—:--</div>
-        <div class="label">Time left</div>
+      <div class="panel dash-stat">
+        <div class="dash-stat__value warning" id="dash-clock">—:--</div>
+        <div class="dash-stat__label">Time left</div>
       </div>
     </div>
   </section>
 
-  <!-- Team card -->
   <section class="section" aria-labelledby="team-title">
     <div class="section__head"><h2 id="team-title">Your team</h2></div>
     <div id="dash-team-empty" class="panel" style="text-align:center;padding:2.5rem 1rem">
-      <h3 style="margin-top:0">No team yet</h3>
-      <p class="muted">Create a team or find an existing one to compete with others.</p>
-      <div class="button-row" style="justify-content:center;margin-top:1rem">
+      <div style="font-size:2rem;margin-bottom:0.5rem;opacity:0.4">&#127993;</div>
+      <h3 style="margin-top:0;font-size:1.1rem">No team yet</h3>
+      <p class="muted" style="margin-bottom:1rem">Create a team or find an existing one to compete with others.</p>
+      <div class="button-row" style="justify-content:center">
         <button class="btn btn--primary" id="btn-create-team">Create a team</button>
         <button class="btn btn--ghost" id="btn-find-team">Find a team</button>
       </div>
     </div>
-    <div id="dash-team-card" class="panel team-card" hidden>
+    <div id="dash-team-card" class="panel" hidden>
       <div class="team-card__info">
         <h3 id="dash-team-name">—</h3>
         <div class="team-card__meta" id="dash-team-meta">— &middot; 0/3 members</div>
@@ -82,25 +136,23 @@
     </div>
   </section>
 
-  <!-- Quick actions -->
   <section class="section" aria-labelledby="actions-title">
     <div class="section__head"><h2 id="actions-title">Quick actions</h2></div>
     <div class="grid-2">
       <div class="panel">
-        <h3 style="margin-top:0">Competition status</h3>
-        <div id="dash-comp-status" class="muted small" style="font-family:var(--mono)">Loading…</div>
-        <p class="muted small" style="margin-top:0.5rem">The 90-minute clock starts when your captain presses "Start Competition".</p>
+        <h3 style="margin:0 0 0.5rem;font-size:0.95rem">Competition status</h3>
+        <div id="dash-comp-status" class="muted small font-mono">Loading…</div>
+        <p class="muted small" style="margin-top:0.4rem;margin-bottom:0">The 90-minute clock starts when your captain presses "Start Competition".</p>
       </div>
       <div class="panel">
-        <h3 style="margin-top:0">Your notifications</h3>
-        <div id="dash-notifications" style="max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);background:#0c0c0d;padding:0.75rem">
+        <h3 style="margin:0 0 0.5rem;font-size:0.95rem">Your notifications</h3>
+        <div id="dash-notifications" style="max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-elevated);padding:0.6rem">
           <div class="muted small">Loading notifications…</div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Challenge progress preview -->
   <section class="section" aria-labelledby="progress-title">
     <div class="section__head"><h2 id="progress-title">Challenge progress</h2></div>
     <div id="dash-progress" class="grid-2"></div>
@@ -229,7 +281,6 @@
       renderNotifications();
       renderProgress();
       renderScore();
-      // fetch scoreboard for rank + score
       fetch(window.CTF_CONFIG.apiBase + "/api/scoreboard").then(function (r) { return r.json(); }).then(function (data) {
         var teams = data.teams || [];
         var myTeamId = (user && user.team && user.team.id) || null;
@@ -242,7 +293,6 @@
           document.getElementById("dash-rank").textContent = "unranked";
         }
       }).catch(function () {});
-      // clock
       if (user && user.team && user.team.started_at && user.team.ended_at) {
         var end = Number(user.team.ended_at);
         var iv = setInterval(function () {
