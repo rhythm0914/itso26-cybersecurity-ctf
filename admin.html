@@ -21,6 +21,7 @@
       <a href="dashboard.html">Dashboard</a>
       <a href="admin.html" aria-current="page">Admin</a>
       <a href="challenges.html">Challenges</a>
+      <a href="scoreboard.html">Scoreboard</a>
     </nav>
     <div class="topbar__status">
       <button class="btn btn--ghost btn--small" id="logout-btn">Sign out</button>
@@ -41,59 +42,59 @@
     </div>
   </section>
 
-  <section class="section" style="margin-top:1.5rem">
+  <section class="section">
     <div class="section__head"><h2>Announcements</h2></div>
     <form id="announce-form" novalidate style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:1rem">
-      <input type="text" id="announce-title" placeholder="Title" required style="flex:1;min-width:180px">
-      <textarea id="announce-body" placeholder="Body" required style="flex:2;min-width:260px;height:70px"></textarea>
+      <input type="text" id="announce-title" placeholder="Title" required maxlength="120" style="flex:1;min-width:180px">
+      <textarea id="announce-body" placeholder="Body" required maxlength="5000" style="flex:2;min-width:260px;height:70px"></textarea>
       <button type="submit" class="btn btn--primary">Publish</button>
     </form>
     <div id="announcements-list"></div>
   </section>
 
-  <section class="section" style="margin-top:1.5rem">
+  <section class="section">
     <div class="section__head"><h2>Recent audit log</h2></div>
     <div id="audit-list" style="max-height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);background:#0c0c0d;padding:0.75rem">
       <div class="muted small">Loading…</div>
     </div>
   </section>
 
-<section class=\"section\" style=\"margin-top:2rem\">
-  <div class=\"section__head\"><h2>Manage Users</h2></div>
-  <div style=\"overflow-x:auto;\">
-    <table style=\"width:100%;border-collapse:collapse;\">
-      <thead>
-        <tr>
-          <th style=\"padding:0.5rem;text-align:left;\">Username</th>
-          <th style=\"padding:0.5rem;text-align:left;\">Email</th>
-          <th style=\"padding:0.5rem;text-align:left;\">Role</th>
-          <th style=\"padding:0.5rem;text-align:left;\">Verified</th>
-          <th style=\"padding:0.5rem;text-align:left;\">Actions</th>
-        </tr>
-      </thead>
-      <tbody id=\"users-table\"></tbody>
-    </table>
-  </div>
-  <button class=\"btn btn--primary\" style=\"margin-top:0.5rem;\" onclick=\"renderUsers()\">Refresh Users</button>
-</section>
+  <section class="section">
+    <div class="section__head"><h2>Manage users</h2></div>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse">
+        <thead>
+          <tr>
+            <th style="padding:0.5rem;text-align:left">Username</th>
+            <th style="padding:0.5rem;text-align:left">Email</th>
+            <th style="padding:0.5rem;text-align:left">Role</th>
+            <th style="padding:0.5rem;text-align:left">Verified</th>
+            <th style="padding:0.5rem;text-align:left">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="users-table"></tbody>
+      </table>
+    </div>
+    <button class="btn btn--ghost btn--small" style="margin-top:0.5rem" id="refresh-users">Refresh users</button>
+  </section>
 
-<section class=\"section\" style=\"margin-top:2rem\">
-  <div class=\"section__head\"><h2>Manage Teams</h2></div>
-  <div style=\"overflow-x:auto;\">
-    <table style=\"width:100%;border-collapse:collapse;\">
-      <thead>
-        <tr>
-          <th style=\"padding:0.5rem;text-align:left;\">Name</th>
-          <th style=\"padding:0.5rem;text-align:left;\">School</th>
-          <th style=\"padding:0.5rem;text-align:left;\">Members / Max</th>
-          <th style=\"padding:0.5rem;text-align:left;\">Actions</th>
-        </tr>
-      </thead>
-      <tbody id=\"teams-table\"></tbody>
-    </table>
-  </div>
-  <button class=\"btn btn--primary\" style=\"margin-top:0.5rem;\" onclick=\"renderTeams()\">Refresh Teams</button>
-</section>
+  <section class="section">
+    <div class="section__head"><h2>Manage teams</h2></div>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse">
+        <thead>
+          <tr>
+            <th style="padding:0.5rem;text-align:left">Name</th>
+            <th style="padding:0.5rem;text-align:left">School</th>
+            <th style="padding:0.5rem;text-align:left">Members / Max</th>
+            <th style="padding:0.5rem;text-align:left">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="teams-table"></tbody>
+      </table>
+    </div>
+    <button class="btn btn--ghost btn--small" style="margin-top:0.5rem" id="refresh-teams">Refresh teams</button>
+  </section>
 
 </main>
 
@@ -103,109 +104,171 @@
   </div>
 </footer>
 
-<div class="page-status" id="page-status" role="status" aria-live="polite" data-visible="false"></div>
-
+<script src="js/config.js"></script>
 <script src="js/auth.js"></script>
 <script>
 (function () {
   "use strict";
+
   function flash(msg, tone) {
     var box = document.getElementById("flash");
-    box.textContent = msg; box.className = "page-status" + (tone ? " page-status--" + tone : "");
+    box.textContent = msg;
+    box.className = "page-status" + (tone ? " page-status--" + tone : "");
     box.setAttribute("data-visible", "true");
     setTimeout(function () { box.setAttribute("data-visible", "false"); }, 5000);
   }
-  function esc(s) { return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
+  function renderUsers() {
+    window.Auth.adminUsers().then(function (data) {
+      var users = data.users || [];
+      document.getElementById("users-table").innerHTML = users.map(function (u) {
+        return "<tr>" +
+          "<td style=\"padding:0.5rem\">" + esc(u.username) + "</td>" +
+          "<td style=\"padding:0.5rem\">" + esc(u.email) + "</td>" +
+          "<td style=\"padding:0.5rem\">" + esc(u.role) + "</td>" +
+          "<td style=\"padding:0.5rem\">" + (u.email_verified ? "Yes" : "No") + "</td>" +
+          "<td style=\"padding:0.5rem;white-space:nowrap\">" +
+            "<button class=\"btn btn--ghost btn--small\" data-edit-user=\"" + esc(u.id) + "\" data-role=\"" + esc(u.role) + "\">Role</button> " +
+            "<button class=\"btn btn--ghost btn--small\" data-delete-user=\"" + esc(u.id) + "\">Delete</button>" +
+          "</td>" +
+        "</tr>";
+      }).join("") || "<tr><td colspan=\"5\" class=\"muted\">No users.</td></tr>";
+    }).catch(function () { flash("Could not load users.", "error"); });
+  }
+
+  function renderTeams() {
+    window.Auth.adminTeams().then(function (data) {
+      var teams = data.teams || [];
+      document.getElementById("teams-table").innerHTML = teams.map(function (t) {
+        return "<tr>" +
+          "<td style=\"padding:0.5rem\">" + esc(t.name) + "</td>" +
+          "<td style=\"padding:0.5rem\">" + esc(t.school) + "</td>" +
+          "<td style=\"padding:0.5rem\">" + (t.member_count || 0) + " / " + t.max_size + "</td>" +
+          "<td style=\"padding:0.5rem\"><button class=\"btn btn--ghost btn--small\" data-delete-team=\"" + esc(t.id) + "\">Delete</button></td>" +
+        "</tr>";
+      }).join("") || "<tr><td colspan=\"4\" class=\"muted\">No teams.</td></tr>";
+    }).catch(function () { flash("Could not load teams.", "error"); });
+  }
+
+  function loadStats() {
+    window.Auth.adminStats().then(function (data) {
+      var stats = data.stats || {};
+      document.getElementById("admin-users").textContent = stats.users || 0;
+      document.getElementById("admin-teams").textContent = stats.teams || 0;
+      document.getElementById("admin-requests").textContent = stats.join_requests_pending || 0;
+      document.getElementById("admin-messages").textContent = stats.messages || 0;
+    }).catch(function () { flash("Could not load stats.", "error"); });
+  }
+
+  function loadAudit() {
+    window.Auth.adminAudit().then(function (data) {
+      var audit = data.audit || [];
+      document.getElementById("audit-list").innerHTML = audit.map(function (a) {
+        return "<div style=\"padding:0.5rem 0;border-bottom:1px solid var(--border);font-size:0.85rem\">" +
+          "<div class=\"muted small\" style=\"font-family:var(--mono)\">" + new Date(a.created_at).toLocaleString() + "</div>" +
+          "<div><strong>" + esc(a.actor_username || "system") + "</strong> &middot; <span style=\"color:var(--accent)\">" + esc(a.action) + "</span>" +
+          (a.target_type ? " on " + esc(a.target_type) + " #" + esc(a.target_id) : "") + "</div>" +
+        "</div>";
+      }).join("") || "<div class=\"muted small\">No audit events.</div>";
+    }).catch(function () {
+      document.getElementById("audit-list").innerHTML = "<div class=\"muted small\">Audit log unavailable.</div>";
+    });
+  }
+
+  function loadAnnouncements() {
+    window.Auth.announcements().then(function (data) {
+      var list = data.announcements || [];
+      document.getElementById("announcements-list").innerHTML = list.map(function (a) {
+        return "<div class=\"announcement panel\" style=\"margin-bottom:0.75rem\">" +
+          "<h3 style=\"margin:0 0 0.25rem\">" + esc(a.title) + "</h3>" +
+          "<div class=\"muted small\">by " + esc(a.author || "organizer") + " &middot; " + new Date(a.created_at).toLocaleString() + "</div>" +
+          "<p style=\"margin:0.5rem 0 0;white-space:pre-wrap\">" + esc(a.body) + "</p>" +
+        "</div>";
+      }).join("") || "<p class=\"muted small\">No announcements yet.</p>";
+    }).catch(function () {});
+  }
 
   document.getElementById("logout-btn").addEventListener("click", function () {
     window.Auth.logout().then(function () { location.href = "login.html"; });
   });
 
-  window.Auth.load().then(function (u) {
-    if (!u || (u.role !== "organizer" && u.role !== "admin")) {
-      document.getElementById("main").innerHTML = '<div class="auth-card" style="text-align:center;padding:3rem"><h3>Access denied</h3><p class="muted">Organizer or administrator account required.</p><a href="dashboard.html" class="btn btn--primary">Go to dashboard</a></div>';
+  document.getElementById("refresh-users").addEventListener("click", renderUsers);
+  document.getElementById("refresh-teams").addEventListener("click", renderTeams);
+
+  document.getElementById("users-table").addEventListener("click", function (event) {
+    var edit = event.target.closest("[data-edit-user]");
+    if (edit) {
+      var role = prompt("Role for this user (participant, organizer, admin):", edit.getAttribute("data-role"));
+      if (!role) return;
+      fetch("/api/admin/users/" + encodeURIComponent(edit.getAttribute("data-edit-user")), {
+        method: "PUT", credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: role.trim() })
+      }).then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+        .then(function (res) {
+          if (!res.ok) throw new Error(res.d.error || "Update failed");
+          flash("Role updated.", "ok"); renderUsers();
+        }).catch(function (e) { flash(e.message, "error"); });
       return;
     }
-    Promise.all([
-      window.Auth.adminStats(),
-      window.Auth.adminAudit()
-    ]).then(function (results) {
-      var stats = results[0].stats || {};
-      document.getElementById("admin-users").textContent = stats.users || 0;
-      document.getElementById("admin-teams").textContent = stats.teams || 0;
-      document.getElementById("admin-requests").textContent = stats.join_requests_pending || 0;
-      document.getElementById("admin-messages").textContent = stats.messages || 0;
-      var audit = results[1].audit || [];
-      var html = audit.map(function (a) {
-        return '<div style="padding:0.5rem 0;border-bottom:1px solid var(--border);font-size:0.85rem">' +
-          '<div class="muted small" style="font-family:var(--mono)">'+ new Date(a.created_at).toLocaleString() +'</div>' +
-          '<div><strong>'+ esc(a.actor_username || "system") +'</strong> &middot; <span style="color:var(--accent)">'+ esc(a.action) +'</span>' +
-          (a.target_type ? ' on '+ esc(a.target_type) +' #' + esc(a.target_id) : '') + '</div>' +
-          '</div>';
-      }).join("");
-      document.getElementById("audit-list").innerHTML = html || '<div class="muted small">No audit events.</div>';
-    }).catch(function () {
-      flash("Could not load admin data.", "error");
-    });
+    var del = event.target.closest("[data-delete-user]");
+    if (del) {
+      if (!confirm("Delete this user and their sessions?")) return;
+      fetch("/api/admin/users/" + encodeURIComponent(del.getAttribute("data-delete-user")), {
+        method: "DELETE", credentials: "include"
+      }).then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+        .then(function (res) {
+          if (!res.ok) throw new Error(res.d.error || "Delete failed");
+          flash("User deleted.", "ok"); renderUsers();
+        }).catch(function (e) { flash(e.message, "error"); });
+    }
+  });
+
+  document.getElementById("teams-table").addEventListener("click", function (event) {
+    var del = event.target.closest("[data-delete-team]");
+    if (!del) return;
+    if (!confirm("Delete this team, its members and its solutions?")) return;
+    fetch("/api/admin/teams/" + encodeURIComponent(del.getAttribute("data-delete-team")), {
+      method: "DELETE", credentials: "include"
+    }).then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+      .then(function (res) {
+        if (!res.ok) throw new Error(res.d.error || "Delete failed");
+        flash("Team deleted.", "ok"); renderTeams(); loadStats();
+      }).catch(function (e) { flash(e.message, "error"); });
   });
 
   document.getElementById("announce-form").addEventListener("submit", function (event) {
     event.preventDefault();
-    var title = document.getElementById("announce-title").value;
-    var body = document.getElementById("announce-body").value;
+    var title = document.getElementById("announce-title").value.trim();
+    var body = document.getElementById("announce-body").value.trim();
+    if (!title || !body) { flash("Title and body are required.", "error"); return; }
     window.Auth.createAnnouncement({ title: title, body: body, published: true }).then(function () {
       flash("Announcement published.", "ok");
       document.getElementById("announce-title").value = "";
       document.getElementById("announce-body").value = "";
+      loadAnnouncements();
     }).catch(function (e) { flash(e.message || "Could not publish.", "error"); });
   });
-// Initialize tables
+
+  window.Auth.load().then(function (u) {
+    if (!u || (u.role !== "organizer" && u.role !== "admin")) {
+      document.getElementById("main").innerHTML =
+        '<div class="auth-card" style="text-align:center;padding:3rem">' +
+        "<h3>Access denied</h3><p class=\"muted\">Organizer or administrator account required.</p>" +
+        '<a href="dashboard.html" class="btn btn--primary">Go to dashboard</a></div>';
+      return;
+    }
+    loadStats();
+    loadAudit();
+    loadAnnouncements();
     renderUsers();
     renderTeams();
-
-    function renderUsers() {
-      fetch(window.CTF_CONFIG.apiBase + "/api/admin/users?limit=100")
-        .then(r => r.json())
-        .then(data => {
-          const users = data.users || [];
-          const rows = users.map(u => `
-            <tr>
-              <td>${esc(u.username)}</td>
-              <td>${esc(u.email)}</td>
-              <td>${esc(u.role)}</td>
-              <td>${u.email_verified ? 'Yes' : 'No'}</td>
-              <td>
-                <button class="btn btn--ghost btn--small edit-user" data-id="${u.id}">Edit</button>
-                <button class="btn btn--ghost btn--small delete-user" data-id="${u.id}">Delete</button>
-              </td>
-            </tr>
-          `).join("");
-          document.getElementById("users-table").innerHTML = rows || "<tr><td colspan=6 class='muted'>No users.</td></tr>";
-        })
-        .catch(() => flash("Could not load users.", "error"));
-    }
-
-    function renderTeams() {
-      fetch(window.CTF_CONFIG.apiBase + "/api/admin/teams?limit=100")
-        .then(r => r.json())
-        .then(data => {
-          const teams = data.teams || [];
-          const rows = teams.map(t => `
-            <tr>
-              <td>${esc(t.name)}</td>
-              <td>${esc(t.school)}</td>
-              <td>${t.member_count || 0} / ${t.max_size}</td>
-              <td>
-                <button class="btn btn--ghost btn--small edit-team" data-id="${t.id}">Edit</button>
-                <button class="btn btn--ghost btn--small delete-team" data-id="${t.id}">Delete</button>
-              </td>
-            </tr>
-          `).join("");
-          document.getElementById("teams-table").innerHTML = rows || "<tr><td colspan=4 class='muted'>No teams.</td></tr>";
-        })
-        .catch(() => flash("Could not load teams.", "error"));
-    }
-
   });
 })();
 </script>

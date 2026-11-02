@@ -114,7 +114,7 @@
 <script>
 (function () {
   "use strict";
-  var user = null, teamId = null, pollTimer = null;
+  var user = null, teamId = null, pollTimer = null, memberFlag = false;
   function flash(msg, tone) {
     var box = document.getElementById("flash");
     box.textContent = msg; box.className = "page-status" + (tone ? " page-status--" + tone : "");
@@ -142,7 +142,8 @@
     var rosterEmpty = document.getElementById("roster-empty");
     var chatMembers = document.getElementById("chat-members");
 
-    var isMember = user && (members || []).some(function (m) { return m.user_id === user.id; });
+    var isMember = !!(user && (members || []).some(function (m) { return m.user_id === user.id; }));
+    memberFlag = isMember;
     var isCaptain = isMember && (members || []).some(function (m) { return m.user_id === user.id && (m.is_captain === 1 || m.slot_index === 0); });
 
     (members || []).forEach(function (m) {
@@ -184,7 +185,8 @@
     // join by code section
     var joinSection = document.getElementById("join-section");
     var joinReqSection = document.getElementById("join-request-section");
-    if (team.recruitment) {
+    joinSection.hidden = isMember;
+    if (team.recruitment && !isMember) {
       joinSection.hidden = false;
       document.getElementById("btn-join-code").onclick = function () {
         var code = String(document.getElementById("join-code").value || "").trim();
@@ -207,11 +209,17 @@
       joinSection.hidden = true;
     }
     if (isMember) {
-      joinRequestSection.innerHTML = '<p class="muted small">You are a member of this team.</p>';
+      joinReqSection.innerHTML = '<p class="muted small">You are a member of this team.</p>';
     } else if (!team.recruitment) {
-      joinRequestSection.innerHTML = '<p class="muted small">This team is not recruiting. You can still request to join.</p>' +
-        '<button class="btn btn--primary" style="margin-top:0.5rem" onclick="sendReq()">Request to join</button>';
+      joinReqSection.innerHTML = '<p class="muted small">This team is not recruiting.</p>';
+    } else {
+      joinReqSection.innerHTML = '<p class="muted small">Prefer to introduce yourself? Send a join request to the captain.</p>' +
+        '<button class="btn btn--ghost" style="margin-top:0.5rem" onclick="sendReq()">Request to join</button>';
     }
+
+    // Chat is only meaningful (and only authorised) for team members.
+    var chatWrap = document.querySelector(".chat-wrap");
+    if (chatWrap) chatWrap.hidden = !isMember;
   }
 
   window.sendReq = function () {
@@ -223,7 +231,7 @@
   };
 
   function loadChat() {
-    if (!teamId) return;
+    if (!teamId || !memberFlag) return;
     window.Auth.chatMessages(teamId).then(function (data) {
       var box = document.getElementById("chat-messages");
       var msgs = data.messages || [];
@@ -269,6 +277,7 @@
     window.Auth.teamDetail(teamId).then(function (data) {
       renderTeam(data.team, data.members || []);
       loadChat();
+      if (pollTimer) clearInterval(pollTimer);
       pollTimer = setInterval(loadChat, 4000);
     }).catch(function () {
       document.getElementById("team-loader").textContent = "Team not found or you do not have access.";

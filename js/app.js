@@ -155,17 +155,17 @@
       state.member = member || null;
       state.members = members;
       state.solved = data.solved || {};
-      state.hints = {};
-      state.attempts = {};
-      state.locked = [];
+      state.hints = data.hints || {};
+      state.attempts = data.attempts || {};
+      state.locked = data.locked || [];
       state.lastSolveAt = null;
 
       Object.keys(state.solved).forEach(function (id) {
         var rec = state.solved[id];
-        state.hints[id] = rec.hints || [];
-        state.attempts[id] = rec.attempts || 0;
-        if (rec.at && (!state.lastSolveAt || rec.at > state.lastSolveAt)) {
-          state.lastSolveAt = rec.at;
+        if (!state.hints[id] && rec.hints && rec.hints.length) state.hints[id] = rec.hints;
+        if (typeof state.attempts[id] !== "number") state.attempts[id] = rec.attempts || 0;
+        if (rec.at && (!state.lastSolveAt || Number(rec.at) > state.lastSolveAt)) {
+          state.lastSolveAt = Number(rec.at);
         }
       });
       return state;
@@ -1142,11 +1142,11 @@
     }).then(function (data) {
       if (submit) submit.disabled = false;
       if (data.correct) {
-        var award = data.pointsAwarded;
+        var award = typeof data.pointsAwarded === "number" ? data.pointsAwarded : data.points;
         var solvedAt = Date.now();
         state.solved[ch.id] = {
           at: solvedAt,
-          points: award,
+          points: typeof award === "number" ? award : awardFor(ch),
           hints: hintsFor(ch).slice()
         };
         state.lastSolveAt = solvedAt;
@@ -1165,6 +1165,9 @@
         if (input) input.value = "";
       } else {
         var left = data.attemptsLeft;
+        if (typeof left === "number") {
+          state.attempts[ch.id] = Math.max(0, (CFG.maxAttempts || 3) - left);
+        }
         if (data.locked) {
           if (state.locked.indexOf(ch.id) === -1) state.locked.push(ch.id);
           saveState();
@@ -1193,14 +1196,22 @@
     var used = hintsFor(ch);
     if (used.indexOf(index) !== -1) { pendingHint = null; renderHints(ch); return; }
     if (index > 0 && used.indexOf(index - 1) === -1) { pendingHint = null; renderHints(ch); return; }
-    used.push(index);
-    state.hints[ch.id] = used;
-    saveState();
     pendingHint = null;
-    renderHints(ch);
-    renderModalFooter(ch, isSolved(ch), isLocked(ch), over());
-    renderBoard();
-    setFeedback("Hint " + (index + 1) + " revealed (-" + hintCost(ch, index) + " points).", "info");
+    setFeedback("Unlocking hint " + (index + 1) + " ...", "info");
+    apiFetch("/api/hints", {
+      method: "POST",
+      body: { challengeId: ch.id, index: index }
+    }).then(function (data) {
+      state.hints[ch.id] = (data && data.hints) || used.concat([index]);
+      saveState();
+      renderHints(ch);
+      renderModalFooter(ch, isSolved(ch), isLocked(ch), over());
+      renderBoard();
+      setFeedback("Hint " + (index + 1) + " revealed (-" + hintCost(ch, index) + " points).", "info");
+    }).catch(function (error) {
+      renderHints(ch);
+      setFeedback("Could not unlock hint: " + (error.message || "try again"), "error");
+    });
   }
 
   /* ================================================================== */
@@ -1237,7 +1248,7 @@
           school: team.school || "",
           score: Number(team.score || 0),
           solved: Number(team.solved || 0),
-          lastSolve: team.lastSolve ? Date.parse(team.lastSolve) : null,
+          lastSolve: team.lastSolve ? Number(team.lastSolve) : null,
           mine: team.id === (state.team ? state.team.id : null),
           rank: team.rank
         };

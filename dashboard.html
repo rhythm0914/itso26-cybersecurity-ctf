@@ -146,8 +146,16 @@
   }
 
   function renderScore() {
-    document.getElementById("dash-score").textContent = user ? (user.team && user.team ? 0 : 0) : 0;
-    // actual score computed below from team data
+    var solved = (user && user.solved) || {};
+    var score = 0, count = 0;
+    Object.keys(solved).forEach(function (id) {
+      var ch = ALL.filter(function (c) { return c.id === id; })[0];
+      if (ch && ch.id === (CFG.tiebreakerId || "tb-vuln-vs-threat") && !CFG.tiebreakerCountsForTotal) return;
+      score += Number(solved[id].points || 0);
+      count++;
+    });
+    document.getElementById("dash-score").textContent = String(score);
+    document.getElementById("dash-solved").textContent = String(count);
   }
 
   function renderTeam() {
@@ -163,7 +171,7 @@
     var team = user.team;
     document.getElementById("dash-team-name").textContent = esc(team.name);
     var mc = (user.members || []).length;
-    document.getElementById("dash-team-meta").textContent = mc + "/3 members" + (team.started_at ? " &middot; clock running" : "");
+    document.getElementById("dash-team-meta").textContent = mc + "/" + (team.max_size || 3) + " members" + (team.started_at ? " · clock running" : "");
     document.getElementById("btn-view-team").onclick = function () { location.href = "team.html?id=" + encodeURIComponent(team.id); };
     document.getElementById("btn-open-chat").onclick = function () { location.href = "team.html?id=" + encodeURIComponent(team.id) + "#chat"; };
     document.getElementById("btn-leave-team").onclick = function () {
@@ -197,19 +205,17 @@
   function renderProgress() {
     var box = document.getElementById("dash-progress");
     var cats = CFG.categories || [];
+    var solvedMap = (user && user.solved) || {};
     var html = "";
     cats.forEach(function (cat) {
       var list = ALL.filter(function (ch) { return ch.category === cat.name; });
-      var solved = 0;
-      if (user && user.team) {
-        var solvedIds = Object.keys(user.team ? {} : {});
-      }
-      // We don't have per-user solved state easily here; show category totals
+      var solved = list.filter(function (ch) { return !!solvedMap[ch.id]; }).length;
+      var pct = list.length ? Math.round((solved / list.length) * 100) : 0;
       html += '<div class="panel panel--tight">' +
         '<h3 style="margin:0 0 0.5rem;font-size:0.95rem">'+ esc(cat.name) +'</h3>' +
         '<div class="progress-row"><span class="progress-row__label">'+ esc(cat.short || cat.name) +'</span>' +
-        '<div class="progress"><span class="progress__fill" style="width:0%"></span></div>' +
-        '<span class="progress-row__value">0/'+ list.length +'</span></div>' +
+        '<div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="'+ list.length +'" aria-valuenow="'+ solved +'"><span class="progress__fill" style="width:'+ pct +'%"></span></div>' +
+        '<span class="progress-row__value">'+ solved +'/'+ list.length +'</span></div>' +
         '</div>';
     });
     box.innerHTML = html;
@@ -237,8 +243,8 @@
         }
       }).catch(function () {});
       // clock
-      if (user && user.team && user.team.ended_at) {
-        var end = user.team.ended_at;
+      if (user && user.team && user.team.started_at && user.team.ended_at) {
+        var end = Number(user.team.ended_at);
         var iv = setInterval(function () {
           var left = end - Date.now();
           document.getElementById("dash-clock").textContent = left > 0 ? fmtMs(left) : "0:00";
@@ -246,6 +252,7 @@
         }, 1000);
       } else {
         document.getElementById("dash-clock").textContent = "not started";
+        document.getElementById("dash-comp-status").textContent = "Waiting for the captain to start the competition.";
       }
     });
   }

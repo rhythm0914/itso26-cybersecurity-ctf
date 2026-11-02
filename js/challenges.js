@@ -2,9 +2,9 @@
  * challenges.js - the challenge board data.
  * This is THE file you edit to add a challenge.
  *
- * Every flag is stored as a salted SHA-256 hash, never in plain text:
- *     hash = SHA256( salt + "::" + answer )
- * The salt lives in js/config.js. Generate the hash with tools/hash.html.
+ * Flags are verified server-side: the salted SHA-256 hashes live in the D1
+ * challenge_flags table (see migrations/007), never in this file. The client
+ * only reads challenge metadata, points and hints.
  *
  * Field reference
  *   id            unique slug (used as the localStorage key)
@@ -510,9 +510,6 @@ window.CTF_CHALLENGES = [
       "words separated by spaces. Case does not matter and the CTF{} wrapper is optional.",
     files: [],
     hints: [],
-      "3d0841d864b977c16db3860fd0c0a0b7d8df6fc398bb012169667feb706ed74f",
-      "4dc41b9c4fd6a6d6d2ef4cb5bc1ae784c3e64b5b42adbb5760abcd601f062197"
-    ],
     caseSensitive: false,
     tools: [],
     writeup:
@@ -570,10 +567,6 @@ window.CTF_CHALLENGES = [
       "the CTF{} wrapper is optional.",
     files: [],
     hints: [],
-      "a2b011885c459daa478dcc7878b0538fffbd3fdc5c9f772f0ae37ecf786cdda2",
-      "e9b8478eec07ccf92454095f79df8cd2d1fa7393708c7ca43defbd918be2fad7",
-      "196d726dd7470d9b63452d7e5ea0ebaac62864330c4acfc5e1156e95c3174a87"
-    ],
     caseSensitive: false,
     tools: [],
     writeup:
